@@ -29,14 +29,21 @@ export const reimbursementsRouter = Router();
 
 reimbursementsRouter.use(authenticate);
 
-reimbursementsRouter.get("/", list);
+reimbursementsRouter.get(
+  "/",
+  list
+);
 reimbursementsRouter.post(
   "/",
   authorize(UserRole.EMPLOYEE),
   validate(createReimbursementSchema),
   create
 );
-reimbursementsRouter.get("/:id", validate(reimbursementParamsSchema), detail);
+reimbursementsRouter.get(
+  "/:id",
+  validate(reimbursementParamsSchema),
+  detail
+);
 reimbursementsRouter.put(
   "/:id",
   authorize(UserRole.EMPLOYEE),

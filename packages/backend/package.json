@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "bun --watch server.ts",
     "start": "bun server.ts",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
     "db:migrate": "bunx prisma migrate dev",
     "db:generate": "bunx prisma generate",
     "db:studio": "bunx prisma studio",
