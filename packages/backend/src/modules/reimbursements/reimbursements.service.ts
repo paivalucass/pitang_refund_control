@@ -6,6 +6,8 @@ import {
   UserRole,
   type UserRole as UserRoleType,
 } from "../../generated/prisma";
+
+import dayjs from "dayjs";
 import { AppError } from "../../lib/AppError.ts";
 import { prisma } from "../../lib/prisma.ts";
 
@@ -154,7 +156,7 @@ export async function createReimbursement(
         categoryId: data.categoryId,
         description: data.description,
         amount: data.amount,
-        expenseDate: data.expenseDate,
+        expenseDate: dayjs(data.expenseDate).toDate(),
         status: RequestStatus.DRAFT,
       },
       include: reimbursementInclude,
@@ -194,6 +196,10 @@ export async function updateReimbursement(
 
   if (data.categoryId) {
     await ensureActiveCategory(data.categoryId);
+  }
+
+  if (data.expenseDate) {
+    data.expenseDate = dayjs(data.expenseDate).toDate();
   }
 
   return prisma.$transaction(async (tx) => {
