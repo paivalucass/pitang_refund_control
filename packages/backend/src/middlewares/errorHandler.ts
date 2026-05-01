@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
-import { AppError } from "../lib/AppError.js";
+import { AppError } from "../lib/AppError.ts";
 
 export function errorHandler(
   err: Error,
@@ -18,7 +18,7 @@ export function errorHandler(
       message: "Validation failed",
       statusCode: 400,
       error: "Bad Request",
-      details: err.error.map((e) => ({
+      details: err.issues.map((e) => ({
         field: e.path.join("."),
         message: e.message,
       })),

@@ -1,0 +1,99 @@
+import type { Request, Response } from "express";
+import * as reimbursementsService from "./reimbursements.service.ts";
+
+function getId(req: Request): string {
+  return req.params.id as string;
+}
+
+export async function list(req: Request, res: Response): Promise<void> {
+  const reimbursements = await reimbursementsService.listReimbursements(req.user);
+  res.json(reimbursements);
+}
+
+export async function create(req: Request, res: Response): Promise<void> {
+  const reimbursement = await reimbursementsService.createReimbursement(
+    req.body,
+    req.user
+  );
+  res.status(201).json(reimbursement);
+}
+
+export async function detail(req: Request, res: Response): Promise<void> {
+  const reimbursement = await reimbursementsService.getReimbursement(
+    getId(req),
+    req.user
+  );
+  res.json(reimbursement);
+}
+
+export async function update(req: Request, res: Response): Promise<void> {
+  const reimbursement = await reimbursementsService.updateReimbursement(
+    getId(req),
+    req.body,
+    req.user
+  );
+  res.json(reimbursement);
+}
+
+export async function submit(req: Request, res: Response): Promise<void> {
+  const reimbursement = await reimbursementsService.submitReimbursement(
+    getId(req),
+    req.user
+  );
+  res.json(reimbursement);
+}
+
+export async function approve(req: Request, res: Response): Promise<void> {
+  const reimbursement = await reimbursementsService.approveReimbursement(
+    getId(req),
+    req.user
+  );
+  res.json(reimbursement);
+}
+
+export async function reject(req: Request, res: Response): Promise<void> {
+  const reimbursement = await reimbursementsService.rejectReimbursement(
+    getId(req),
+    req.body.rejectionReason,
+    req.user
+  );
+  res.json(reimbursement);
+}
+
+export async function pay(req: Request, res: Response): Promise<void> {
+  const reimbursement = await reimbursementsService.payReimbursement(
+    getId(req),
+    req.user
+  );
+  res.json(reimbursement);
+}
+
+export async function cancel(req: Request, res: Response): Promise<void> {
+  const reimbursement = await reimbursementsService.cancelReimbursement(
+    getId(req),
+    req.user
+  );
+  res.json(reimbursement);
+}
+
+export async function history(req: Request, res: Response): Promise<void> {
+  const entries = await reimbursementsService.getHistory(getId(req), req.user);
+  res.json(entries);
+}
+
+export async function addAttachment(req: Request, res: Response): Promise<void> {
+  const attachment = await reimbursementsService.addAttachment(
+    getId(req),
+    req.body,
+    req.user
+  );
+  res.status(201).json(attachment);
+}
+
+export async function listAttachments(req: Request, res: Response): Promise<void> {
+  const attachments = await reimbursementsService.listAttachments(
+    getId(req),
+    req.user
+  );
+  res.json(attachments);
+}

@@ -1,6 +1,10 @@
 import express from "express";
 import cors from "cors";
-import { errorHandler } from "./src/middlewares/errorHandler.js";
+import { authRouter } from "./src/modules/auth/auth.router.ts";
+import { categoriesRouter } from "./src/modules/categories/categories.router.ts";
+import { reimbursementsRouter } from "./src/modules/reimbursements/reimbursements.router.ts";
+import { usersRouter } from "./src/modules/users/users.router.ts";
+import { errorHandler } from "./src/middlewares/errorHandler.ts";
 
 const app = express();
 
@@ -9,10 +13,10 @@ app.use(cors());
 app.use(express.json());
 
 // --------------- Routes ---------------
-// TODO: app.use("/auth",          authRouter);
-// TODO: app.use("/users",         usersRouter);
-// TODO: app.use("/categories",    categoriesRouter);
-// TODO: app.use("/reimbursements", reimbursementsRouter);
+app.use("/auth", authRouter);
+app.use("/users", usersRouter);
+app.use("/categories", categoriesRouter);
+app.use("/reimbursements", reimbursementsRouter);
 
 // Health check
 app.get("/health", (_req, res) => {

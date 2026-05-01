@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { UserRole } from "../../generated/prisma";
+import { authenticate } from "../../middlewares/authenticate.ts";
+import { authorize } from "../../middlewares/authorize.ts";
+import { validate } from "../../middlewares/validate.ts";
+import { create, list } from "./users.controller.ts";
+import { createUserSchema } from "./users.schemas.ts";
+
+export const usersRouter = Router();
+
+usersRouter.post("/", validate(createUserSchema), create);
+usersRouter.get("/", authenticate, authorize(UserRole.ADMIN), list);

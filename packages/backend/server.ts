@@ -1,7 +1,9 @@
-import { app } from "./app.js";
-import { env } from "./src/lib/env.js";
+import { app } from "./app.ts";
+import { env } from "./src/lib/env.ts";
 
-app.listen(env.PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${env.PORT}`);
-  console.log(`📋 Environment: ${env.NODE_ENV}`);
+const server = app.listen(env.PORT, () => {
+  console.log(`Server running on http://localhost:${env.PORT}`);
+  console.log(`Environment: ${env.NODE_ENV}`);
 });
+
+export { server };
