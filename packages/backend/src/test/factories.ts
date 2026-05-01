@@ -8,7 +8,7 @@ import {
   type Reimbursement,
   type User,
   type UserRole as UserRoleType,
-} from "../generated/prisma";
+} from "../generated/prisma/index";
 import { prisma } from "../lib/prisma.ts";
 
 let sequence = 0;

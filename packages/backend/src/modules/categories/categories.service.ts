@@ -1,4 +1,4 @@
-import { Prisma } from "../../generated/prisma";
+import { Prisma } from "../../generated/prisma/index";
 import { AppError } from "../../lib/AppError.ts";
 import { prisma } from "../../lib/prisma.ts";
 

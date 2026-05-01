@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { UserRole } from "../generated/prisma";
+import { UserRole } from "../generated/prisma/index";
 import { AppError } from "../lib/AppError.ts";
 import { env } from "../lib/env.ts";
 

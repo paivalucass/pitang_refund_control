@@ -1,6 +1,6 @@
 import request from "supertest";
 import { app } from "../../../app.ts";
-import { UserRole } from "../../generated/prisma";
+import { UserRole } from "../../generated/prisma/index";
 import {
   auth,
   createCategory,

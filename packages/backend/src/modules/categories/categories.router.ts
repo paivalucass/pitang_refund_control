@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { UserRole } from "../../generated/prisma";
+import { UserRole } from "../../generated/prisma/index";
 import { authenticate } from "../../middlewares/authenticate.ts";
 import { authorize } from "../../middlewares/authorize.ts";
 import { validate } from "../../middlewares/validate.ts";

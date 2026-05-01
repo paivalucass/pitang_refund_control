@@ -5,7 +5,7 @@ import {
   RequestStatus,
   UserRole,
   type UserRole as UserRoleType,
-} from "../../generated/prisma";
+} from "../../generated/prisma/index";
 
 import dayjs from "dayjs";
 import { AppError } from "../../lib/AppError.ts";

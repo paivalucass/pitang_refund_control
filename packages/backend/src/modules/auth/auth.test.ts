@@ -1,6 +1,6 @@
 import request from "supertest";
 import { app } from "../../../app.ts";
-import { UserRole } from "../../generated/prisma";
+import { UserRole } from "../../generated/prisma/index";
 import { auth, createUser, createUserAndToken } from "../../test/factories.ts";
 
 describe("auth routes", () => {
