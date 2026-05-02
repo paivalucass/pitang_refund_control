@@ -10,6 +10,11 @@ export async function list(req: Request, res: Response): Promise<void> {
   res.json(reimbursements);
 }
 
+export async function past(req: Request, res: Response): Promise<void> {
+  const reimbursements = await reimbursementsService.listPastReimbursements(req.user);
+  res.json(reimbursements);
+}
+
 export async function create(req: Request, res: Response): Promise<void> {
   const reimbursement = await reimbursementsService.createReimbursement(
     req.body,

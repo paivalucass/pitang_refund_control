@@ -10,6 +10,7 @@ import { NewReimbursementPage } from '@/pages/NewReimbursementPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { ReimbursementDetailPage } from '@/pages/ReimbursementDetailPage'
+import { ReimbursementsHistoryPage } from '@/pages/ReimbursementsHistoryPage'
 import { UsersPage } from '@/pages/UsersPage'
 
 function App() {
@@ -27,6 +28,9 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={['EMPLOYEE']} />}>
             <Route path="/reimbursements/new" element={<NewReimbursementPage />} />
             <Route path="/reimbursements/:id/edit" element={<EditReimbursementPage />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={['MANAGER', 'FINANCE']} />}>
+            <Route path="/reimbursements/history" element={<ReimbursementsHistoryPage />} />
           </Route>
           <Route path="/reimbursements/:id" element={<ReimbursementDetailPage />} />
           <Route element={<PrivateRoute allowedRoles={['ADMIN']} />}>

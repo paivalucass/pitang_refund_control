@@ -12,6 +12,10 @@ export function listReimbursements() {
   return apiFetch<Reimbursement[]>('/reimbursements')
 }
 
+export function listPastReimbursements() {
+  return apiFetch<Reimbursement[]>('/reimbursements/history')
+}
+
 export function getReimbursement(id: string) {
   return apiFetch<Reimbursement>(`/reimbursements/${id}`)
 }

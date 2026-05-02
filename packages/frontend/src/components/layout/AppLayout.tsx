@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 import {
   FolderOpen,
+  History,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -27,6 +28,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, roles: ['EMPLOYEE', 'MANAGER', 'FINANCE', 'ADMIN'] },
   { label: 'Nova Solicitação', to: '/reimbursements/new', icon: PlusCircle, roles: ['EMPLOYEE'] },
+  { label: 'Histórico', to: '/reimbursements/history', icon: History, roles: ['MANAGER', 'FINANCE'] },
   { label: 'Categorias', to: '/categories', icon: FolderOpen, roles: ['ADMIN'] },
   { label: 'Usuários', to: '/users', icon: Users, roles: ['ADMIN'] },
 ]

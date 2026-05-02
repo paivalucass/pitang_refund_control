@@ -90,7 +90,12 @@ function ensureCanView(
     return;
   }
 
-  if (user.role === UserRole.MANAGER && reimbursement.status === RequestStatus.SUBMITTED) {
+  if (
+    user.role === UserRole.MANAGER &&
+    ([RequestStatus.SUBMITTED, RequestStatus.APPROVED, RequestStatus.PAID] as RequestStatus[]).includes(
+      reimbursement.status
+    )
+  ) {
     return;
   }
 
@@ -104,6 +109,29 @@ function ensureCanView(
   }
 
   throw new AppError("Você não tem permissão para acessar esta solicitação", 403);
+}
+
+export async function listPastReimbursements(userInput?: AuthUser) {
+  const user = requireUser(userInput);
+
+  if (user.role !== UserRole.MANAGER && user.role !== UserRole.FINANCE) {
+    throw new AppError("Você não tem permissão para acessar este histórico", 403);
+  }
+
+  const statuses =
+    user.role === UserRole.MANAGER
+      ? [RequestStatus.APPROVED, RequestStatus.PAID, RequestStatus.REJECTED]
+      : [RequestStatus.PAID];
+
+  return prisma.reimbursement.findMany({
+    where: {
+      status: {
+        in: statuses,
+      },
+    },
+    include: reimbursementInclude,
+    orderBy: { updatedAt: "desc" },
+  });
 }
 
 async function createHistory(

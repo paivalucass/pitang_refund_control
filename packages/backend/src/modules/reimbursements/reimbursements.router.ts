@@ -12,6 +12,7 @@ import {
   history,
   list,
   listAttachments,
+  past,
   pay,
   reject,
   submit,
@@ -32,6 +33,11 @@ reimbursementsRouter.use(authenticate);
 reimbursementsRouter.get(
   "/",
   list
+);
+reimbursementsRouter.get(
+  "/history",
+  authorize(UserRole.MANAGER, UserRole.FINANCE),
+  past
 );
 reimbursementsRouter.post(
   "/",
