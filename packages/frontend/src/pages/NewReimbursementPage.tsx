@@ -32,14 +32,19 @@ export function NewReimbursementPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Nova Solicitação</h1>
-        <p className="text-sm text-slate-500">Registre uma despesa para reembolso.</p>
+      <div className="relative min-h-48 overflow-hidden rounded-lg bg-red-700 p-6 text-white shadow-sm">
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full border-[22px] border-white/10" />
+        <div className="absolute bottom-4 right-8 hidden h-16 w-16 rounded-full bg-white/10 md:block" />
+        <img className="relative mb-6 h-14 w-auto invert brightness-0" src="/pitang_pitang.png" alt="Pitang" />
+        <div className="relative">
+          <h1 className="text-2xl font-semibold">Nova Solicitação</h1>
+          <p className="text-sm text-white/80">Registre uma despesa para reembolso.</p>
+        </div>
       </div>
       {loading ? <LoadingTable rows={3} /> : null}
       {error ? <ErrorState message={error.message} onRetry={() => void refetch()} /> : null}
       {categories ? (
-        <Card>
+        <Card className="min-h-[28rem]">
           <CardHeader>
             <CardTitle>Dados da despesa</CardTitle>
             <CardDescription>Todos os campos são obrigatórios.</CardDescription>

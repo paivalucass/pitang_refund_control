@@ -20,8 +20,8 @@ const colors: Record<RequestStatus, string> = {
   CANCELED: 'bg-orange-100 text-orange-700',
 }
 
-export function StatusBadge({ status }: { status: RequestStatus }) {
-  return <Badge className={cn('border-transparent', colors[status])}>{labels[status]}</Badge>
+export function StatusBadge({ status, className }: { status: RequestStatus; className?: string }) {
+  return <Badge className={cn('border-transparent', colors[status], className)}>{labels[status]}</Badge>
 }
 
 export { labels as statusLabels }

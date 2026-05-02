@@ -43,6 +43,10 @@ body {
   background: hsl(var(--background));
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 a {
   color: inherit;
   text-decoration: none;

@@ -1,16 +1,6 @@
 import * as React from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
-import {
-  FolderOpen,
-  History,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  PlusCircle,
-  ReceiptText,
-  Users,
-  X,
-} from 'lucide-react'
+import { FolderOpen, History, LayoutDashboard, LogOut, Menu, PlusCircle, Users, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { RoleBadge } from '@/components/RoleBadge'
@@ -39,12 +29,11 @@ export function AppLayout() {
   const visibleItems = navItems.filter((item) => user && item.roles.includes(user.role))
 
   const sidebar = (
-    <aside className="flex h-full w-72 flex-col border-r bg-white">
-      <Link className="flex h-16 items-center gap-2 px-6 font-semibold" to="/dashboard">
-        <ReceiptText className="h-5 w-5" />
-        Pitang Reembolsos
+    <aside className="flex h-full w-72 flex-col border-r border-red-950/20 bg-red-700 text-white">
+      <Link className="flex h-22 flex-col items-start justify-center gap-2 px-6" to="/dashboard">
+        <img className="h-11 w-auto" src="/logo-pitang.png" alt="Pitang" />
       </Link>
-      <Separator />
+      <Separator className="bg-white/20" />
       <nav className="flex-1 space-y-1 p-4">
         {visibleItems.map((item) => {
           const Icon = item.icon
@@ -52,8 +41,8 @@ export function AppLayout() {
             <NavLink
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100',
-                  isActive && 'bg-slate-100 text-slate-950',
+                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white',
+                  isActive && '!bg-white !text-red-700 hover:!bg-white hover:!text-red-700 [&_svg]:!text-red-700',
                 )
               }
               key={item.to}
@@ -70,23 +59,28 @@ export function AppLayout() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-red-50">
       <div className="hidden fixed inset-y-0 left-0 lg:block">{sidebar}</div>
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-0 bg-red-950/50" onClick={() => setMobileOpen(false)} />
           <div className="relative h-full">{sidebar}</div>
         </div>
       ) : null}
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-white px-4 lg:px-8">
-          <Button type="button" variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen(true)}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            <span className="sr-only">Abrir menu</span>
-          </Button>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{user?.name}</p>
-            <p className="truncate text-xs text-slate-500">{user?.email}</p>
+        <header className="sticky top-0 z-40 grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 border-b border-red-100 bg-white px-4 shadow-sm lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button type="button" variant="ghost" size="icon" className="shrink-0 text-red-700 lg:hidden" onClick={() => setMobileOpen(true)}>
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              <span className="sr-only">Abrir menu</span>
+            </Button>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-red-950">{user?.name}</p>
+              <p className="truncate text-xs text-red-700/70">{user?.email}</p>
+            </div>
+          </div>
+          <div className="min-w-0 justify-self-center text-center">
+            <p className="truncate text-2xl font-bold text-red-700">Controle de Reembolsos</p>
           </div>
           <div className="flex items-center gap-3">
             {user ? <RoleBadge role={user.role} /> : null}

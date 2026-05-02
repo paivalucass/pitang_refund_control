@@ -53,11 +53,24 @@ export function RegisterPage() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Criar conta</CardTitle>
-          <CardDescription>Cadastre um usuário para acessar o sistema.</CardDescription>
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-red-700 p-4">
+      <div className="absolute -right-24 top-10 h-72 w-72 rounded-full border border-white/20" />
+      <div className="absolute bottom-[-90px] left-[-70px] h-80 w-80 rounded-full border-[28px] border-white/10" />
+      <div className="absolute left-8 top-8 hidden h-24 w-24 rounded-full bg-white/10 md:block" />
+      <Card className="relative w-full max-w-md border-white/20 bg-white shadow-2xl">
+        <CardHeader className="space-y-5">
+          <div className="flex w-full items-stretch overflow-hidden rounded-md">
+            <div className="flex items-center bg-red-700 px-3 py-2">
+              <img className="h-8 w-auto" src="/logo-pitang.png" alt="Pitang" />
+            </div>
+            <div className="flex flex-1 items-center justify-end bg-slate-100 px-4 py-2 text-right">
+              <span className="text-xl font-semibold leading-tight text-red-700">Controle de Reembolsos</span>
+            </div>
+          </div>
+          <div>
+            <CardTitle>Criar conta</CardTitle>
+            <CardDescription>Cadastre um usuário para acessar o sistema.</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>

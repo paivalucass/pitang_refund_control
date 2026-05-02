@@ -107,7 +107,7 @@ export function ReimbursementDetailPage() {
               <h1 className="text-2xl font-semibold">{request.description}</h1>
               <p className="text-sm text-slate-500">Solicitação criada em {formatDateTime(request.createdAt)}</p>
             </div>
-            <StatusBadge status={request.status} />
+            <StatusBadge className="px-4 py-1.5 text-sm" status={request.status} />
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -195,7 +195,12 @@ export function ReimbursementDetailPage() {
           </Card>
 
           <p>
-            <Link className="text-sm font-medium underline" to="/dashboard">Voltar ao dashboard</Link>
+            <Link
+              className="inline-flex h-10 items-center rounded-md bg-red-700 px-4 text-sm font-medium !text-white hover:bg-red-800"
+              to="/dashboard"
+            >
+              Voltar ao dashboard
+            </Link>
           </p>
         </>
       ) : null}
