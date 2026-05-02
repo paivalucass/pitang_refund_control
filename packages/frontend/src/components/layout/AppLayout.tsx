@@ -83,7 +83,7 @@ export function AppLayout() {
             <p className="truncate text-2xl font-bold text-red-700">Controle de Reembolsos</p>
           </div>
           <div className="flex items-center gap-3">
-            {user ? <RoleBadge role={user.role} /> : null}
+            {user ? <RoleBadge className="bg-slate-100 px-3 py-1 text-slate-700" role={user.role} /> : null}
             <Button type="button" variant="outline" size="sm" onClick={logout}>
               <LogOut className="h-4 w-4" />
               Sair

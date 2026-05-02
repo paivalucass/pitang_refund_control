@@ -16,8 +16,8 @@ const colors: Record<UserRole, string> = {
   ADMIN: 'bg-violet-100 text-violet-700',
 }
 
-export function RoleBadge({ role }: { role: UserRole }) {
-  return <Badge className={cn('border-transparent', colors[role])}>{labels[role]}</Badge>
+export function RoleBadge({ role, className }: { role: UserRole; className?: string }) {
+  return <Badge className={cn('rounded-md border-transparent', colors[role], className)}>{labels[role]}</Badge>
 }
 
 export { labels as roleLabels }
