@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from '@/components/ui/sonner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
@@ -76,10 +77,12 @@ export function DashboardPage() {
           </Button>
           {actionButton('Enviar', async () => {
             await submitReimbursement(request.id)
+            toast.success('Solicitação enviada para análise.')
             await load()
           })}
           {actionButton('Cancelar', async () => {
             await cancelReimbursement(request.id)
+            toast.success('Solicitação cancelada com sucesso.')
             await load()
           })}
         </>
@@ -88,12 +91,14 @@ export function DashboardPage() {
     if (user.role === 'MANAGER' && request.status === 'SUBMITTED') {
       return actionButton('Aprovar', async () => {
         await approveReimbursement(request.id)
+        toast.success('Solicitação aprovada com sucesso.')
         await load()
       })
     }
     if (user.role === 'FINANCE' && request.status === 'APPROVED') {
       return actionButton('Marcar pago', async () => {
         await payReimbursement(request.id)
+        toast.success('Solicitação marcada como paga.')
         await load()
       })
     }

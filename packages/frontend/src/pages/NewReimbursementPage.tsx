@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from '@/components/ui/sonner'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
 import { ReimbursementForm } from '@/components/ReimbursementForm'
@@ -20,6 +21,7 @@ export function NewReimbursementPage() {
     setSaveError('')
     try {
       await createReimbursement(data)
+      toast.success('Solicitação criada com sucesso.')
       navigate('/dashboard')
     } catch (err) {
       setSaveError((err as ApiError).message || 'Não foi possível criar a solicitação.')

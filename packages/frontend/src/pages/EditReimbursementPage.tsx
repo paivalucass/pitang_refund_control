@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from '@/components/ui/sonner'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
 import { ReimbursementForm } from '@/components/ReimbursementForm'
@@ -43,6 +44,7 @@ export function EditReimbursementPage() {
     setError('')
     try {
       const updated = await updateReimbursement(id, data)
+      toast.success('Solicitação atualizada com sucesso.')
       navigate(`/reimbursements/${updated.id}`)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível salvar.')

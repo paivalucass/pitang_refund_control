@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
+import { toast } from '@/components/ui/sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { firstZodError, passwordSchema, registerSchema } from '@/lib/validation'
 import type { ApiError, UserRole } from '@/types'
@@ -42,6 +43,7 @@ export function RegisterPage() {
     setLoading(true)
     try {
       await register(result.data.name, result.data.email, result.data.password, result.data.role)
+      toast.success('Cadastro realizado com sucesso.')
       navigate('/login', { replace: true })
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível cadastrar.')

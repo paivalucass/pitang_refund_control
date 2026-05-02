@@ -7,6 +7,7 @@ import { Dialog, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
+import { toast } from '@/components/ui/sonner'
 import { Textarea } from '@/components/ui/textarea'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ErrorState } from '@/components/ErrorState'
@@ -59,20 +60,22 @@ export function ReimbursementDetailPage() {
     void load()
   }, [load])
 
-  async function runAction(action: () => Promise<unknown>) {
+  async function runAction(action: () => Promise<unknown>, successMessage: string) {
     await action()
+    toast.success(successMessage)
     await load()
   }
 
-  async function runManagerAction(action: () => Promise<unknown>) {
+  async function runManagerAction(action: () => Promise<unknown>, successMessage: string) {
     await action()
+    toast.success(successMessage)
     navigate('/dashboard')
   }
 
   async function handleReject(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!rejectionReason.trim()) return
-    await runManagerAction(() => rejectReimbursement(id, rejectionReason))
+    await runManagerAction(() => rejectReimbursement(id, rejectionReason), 'Solicitação rejeitada com sucesso.')
     setRejectOpen(false)
     setRejectionReason('')
   }
@@ -81,6 +84,7 @@ export function ReimbursementDetailPage() {
     event.preventDefault()
     if (!attachment.fileName || !attachment.fileUrl) return
     await addAttachment(id, attachment)
+    toast.success('Anexo adicionado com sucesso.')
     setAttachment({ fileName: '', fileUrl: '', fileType: 'PDF' })
     setAttachmentOpen(false)
     await load()
@@ -112,10 +116,10 @@ export function ReimbursementDetailPage() {
                 <Button type="button" variant="outline" onClick={() => navigate(`/reimbursements/${id}/edit`)}>
                   Editar
                 </Button>
-                <Button type="button" onClick={() => confirmAction('Enviar para análise', async () => runAction(() => submitReimbursement(id)))}>
+                <Button type="button" onClick={() => confirmAction('Enviar para análise', async () => runAction(() => submitReimbursement(id), 'Solicitação enviada para análise.'))}>
                   Enviar para Análise
                 </Button>
-                <Button type="button" variant="destructive" onClick={() => confirmAction('Cancelar solicitação', async () => runAction(() => cancelReimbursement(id)))}>
+                <Button type="button" variant="destructive" onClick={() => confirmAction('Cancelar solicitação', async () => runAction(() => cancelReimbursement(id), 'Solicitação cancelada com sucesso.'))}>
                   Cancelar
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setAttachmentOpen(true)}>
@@ -126,7 +130,7 @@ export function ReimbursementDetailPage() {
             ) : null}
             {user?.role === 'MANAGER' && request.status === 'SUBMITTED' ? (
               <>
-                <Button type="button" onClick={() => confirmAction('Aprovar solicitação', async () => runManagerAction(() => approveReimbursement(id)))}>
+                <Button type="button" onClick={() => confirmAction('Aprovar solicitação', async () => runManagerAction(() => approveReimbursement(id), 'Solicitação aprovada com sucesso.'))}>
                   Aprovar
                 </Button>
                 <Button type="button" variant="destructive" onClick={() => setRejectOpen(true)}>
@@ -135,7 +139,7 @@ export function ReimbursementDetailPage() {
               </>
             ) : null}
             {user?.role === 'FINANCE' && request.status === 'APPROVED' ? (
-              <Button type="button" onClick={() => confirmAction('Marcar como pago', async () => runAction(() => payReimbursement(id)))}>
+              <Button type="button" onClick={() => confirmAction('Marcar como pago', async () => runAction(() => payReimbursement(id), 'Solicitação marcada como paga.'))}>
                 Marcar como Pago
               </Button>
             ) : null}

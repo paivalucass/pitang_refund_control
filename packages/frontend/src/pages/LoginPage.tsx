@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { toast } from '@/components/ui/sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { firstZodError, loginSchema } from '@/lib/validation'
 import type { ApiError } from '@/types'
@@ -30,6 +31,7 @@ export function LoginPage() {
     setLoading(true)
     try {
       await login(result.data.email, result.data.password)
+      toast.success('Login realizado com sucesso.')
       navigate('/dashboard', { replace: true })
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível entrar.')

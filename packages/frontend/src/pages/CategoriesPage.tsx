@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from '@/components/ui/sonner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
@@ -54,8 +55,10 @@ export function CategoriesPage() {
     if (!name.trim()) return
     if (editing) {
       await updateCategory(editing.id, { name })
+      toast.success('Categoria atualizada com sucesso.')
     } else {
       await createCategory(name)
+      toast.success('Categoria criada com sucesso.')
     }
     setDialogOpen(false)
     await load()
@@ -63,6 +66,7 @@ export function CategoriesPage() {
 
   async function toggleActive(category: Category) {
     await updateCategory(category.id, { active: !category.active })
+    toast.success(category.active ? 'Categoria desativada com sucesso.' : 'Categoria ativada com sucesso.')
     await load()
   }
 
