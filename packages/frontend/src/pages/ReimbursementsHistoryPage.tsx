@@ -41,8 +41,8 @@ export function ReimbursementsHistoryPage() {
   return (
     <div className="space-y-6">
       <div className="relative min-h-48 overflow-hidden rounded-lg bg-red-700 p-6 text-white shadow-sm">
-        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full border-[22px] border-white/10" />
-        <div className="absolute bottom-4 right-8 hidden h-16 w-16 rounded-full bg-white/10 md:block" />
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full border-[15px] border-white/10" />
+        <div className="absolute right-95 top-30 h-56 w-56 rounded-full border-[1px] border-white/10" />
         <img className="relative mb-6 h-14 w-auto invert brightness-0" src="/pitang_pitang.png" alt="Pitang" />
         <div className="relative">
           <h1 className="text-2xl font-semibold">Histórico</h1>

@@ -29,12 +29,16 @@ export function AppLayout() {
   const visibleItems = navItems.filter((item) => user && item.roles.includes(user.role))
 
   const sidebar = (
-    <aside className="flex h-full w-72 flex-col border-r border-red-950/20 bg-red-700 text-white">
-      <Link className="flex h-22 flex-col items-start justify-center gap-2 px-6" to="/dashboard">
+    <aside className="relative flex h-full w-72 flex-col overflow-hidden border-r border-red-950/20 bg-red-700 text-white">
+      <div className="absolute -left-20 top-72 h-44 w-44 rounded-full border-[2px] border-white/15" />
+      <div className="absolute -right-16 bottom-16 h-48 w-48 rounded-full border-[10px] border-white/10" />
+      <div className="absolute right-8 top-48 h-12 w-12 rounded-full bg-white/10" />
+      <div className="absolute left-30 bottom-67 h-15 w-15 rounded-full border-[1px] border-white/20" />
+      <Link className="relative flex h-22 flex-col items-start justify-center gap-2 px-6" to="/dashboard">
         <img className="h-11 w-auto" src="/logo-pitang.png" alt="Pitang" />
       </Link>
-      <Separator className="bg-white/20" />
-      <nav className="flex-1 space-y-1 p-4">
+      <Separator className="relative bg-white/20" />
+      <nav className="relative flex-1 space-y-1 p-4">
         {visibleItems.map((item) => {
           const Icon = item.icon
           return (

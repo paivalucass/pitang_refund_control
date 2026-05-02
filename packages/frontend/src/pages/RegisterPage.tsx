@@ -57,6 +57,11 @@ export function RegisterPage() {
       <div className="absolute -right-24 top-10 h-72 w-72 rounded-full border border-white/20" />
       <div className="absolute bottom-[-90px] left-[-70px] h-80 w-80 rounded-full border-[28px] border-white/10" />
       <div className="absolute left-8 top-8 hidden h-24 w-24 rounded-full bg-white/10 md:block" />
+      <div className="absolute right-[18%] top-[18%] hidden h-16 w-16 rounded-full border-8 border-white/10 lg:block" />
+      <div className="absolute left-[22%] top-[28%] h-10 w-10 rounded-full bg-white/10" />
+      <div className="absolute bottom-[20%] right-[12%] h-24 w-24 rounded-full border border-white/15" />
+      <div className="absolute bottom-[12%] left-[32%] hidden h-14 w-14 rounded-full bg-white/10 md:block" />
+      <div className="absolute right-[38%] top-8 h-8 w-8 rounded-full border border-white/20" />
       <Card className="relative w-full max-w-md border-white/20 bg-white shadow-2xl">
         <CardHeader className="space-y-5">
           <div className="flex w-full items-stretch overflow-hidden rounded-md">
