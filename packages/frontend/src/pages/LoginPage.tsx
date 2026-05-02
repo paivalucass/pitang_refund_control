@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/contexts/AuthContext'
+import { firstZodError, loginSchema } from '@/lib/validation'
 import type { ApiError } from '@/types'
 
 export function LoginPage() {
@@ -19,13 +20,16 @@ export function LoginPage() {
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
-    if (!email || !password) {
-      setError('Informe e-mail e senha.')
+
+    const result = loginSchema.safeParse({ email, password })
+    if (!result.success) {
+      setError(firstZodError(result.error))
       return
     }
+
     setLoading(true)
     try {
-      await login(email, password)
+      await login(result.data.email, result.data.password)
       navigate('/dashboard', { replace: true })
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível entrar.')

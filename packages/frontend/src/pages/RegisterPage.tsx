@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { useAuth } from '@/contexts/AuthContext'
+import { firstZodError, passwordSchema, registerSchema } from '@/lib/validation'
 import type { ApiError, UserRole } from '@/types'
 
 const roles: Array<{ value: UserRole; label: string }> = [
@@ -25,25 +26,22 @@ export function RegisterPage() {
   const [role, setRole] = React.useState<UserRole>('EMPLOYEE')
   const [error, setError] = React.useState('')
   const [loading, setLoading] = React.useState(false)
+  const passwordResult = passwordSchema.safeParse(password)
+  const showPasswordValidation = password.length > 0
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
-    if (!name || !email || !password) {
-      setError('Preencha todos os campos obrigatórios.')
+
+    const result = registerSchema.safeParse({ name, email, password, role })
+    if (!result.success) {
+      setError(firstZodError(result.error))
       return
     }
-    if (!email.includes('@')) {
-      setError('Informe um e-mail válido.')
-      return
-    }
-    if (password.length < 6) {
-      setError('A senha deve ter no mínimo 6 caracteres.')
-      return
-    }
+
     setLoading(true)
     try {
-      await register(name, email, password, role)
+      await register(result.data.name, result.data.email, result.data.password, result.data.role)
       navigate('/login', { replace: true })
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível cadastrar.')
@@ -81,7 +79,18 @@ export function RegisterPage() {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                aria-describedby="password-validation"
               />
+              {showPasswordValidation ? (
+                <p
+                  id="password-validation"
+                  className={passwordResult.success ? 'text-sm text-green-700' : 'text-sm text-red-700'}
+                >
+                  {passwordResult.success
+                    ? 'Senha com tamanho válido.'
+                    : 'A senha deve ter no mínimo 6 caracteres.'}
+                </p>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Perfil</Label>

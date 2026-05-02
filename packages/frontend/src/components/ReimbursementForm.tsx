@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { firstZodError, reimbursementSchema } from '@/lib/validation'
 import type { Category } from '@/types'
 import type { ReimbursementFormData } from '@/services/reimbursements.service'
 
@@ -39,15 +40,14 @@ export function ReimbursementForm({
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
-    if (!categoryId || !description || !amount || !expenseDate) {
-      setError('Preencha todos os campos obrigatórios.')
+
+    const result = reimbursementSchema.safeParse({ categoryId, description, amount, expenseDate })
+    if (!result.success) {
+      setError(firstZodError(result.error))
       return
     }
-    if (Number(amount) <= 0) {
-      setError('O valor deve ser maior que zero.')
-      return
-    }
-    onSubmit({ categoryId, description, amount: Number(amount), expenseDate })
+
+    onSubmit(result.data)
   }
 
   return (
