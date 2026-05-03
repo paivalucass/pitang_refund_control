@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "../../lib/pagination.ts";
 
 export const categoryParamsSchema = z.object({
   params: z.object({
@@ -23,3 +24,10 @@ export const updateCategorySchema = z.object({
       message: "Informe ao menos um campo para atualização",
     }),
 });
+
+export const listCategoriesQuerySchema = paginationQuerySchema.extend({
+  search: z.string().trim().optional(),
+  active: z.enum(["true", "false"]).transform((value) => value === "true").optional(),
+});
+
+export type ListCategoriesQuery = z.infer<typeof listCategoriesQuerySchema>;

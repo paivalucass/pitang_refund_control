@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { AttachmentType } from "../../generated/prisma";
+import { AttachmentType, RequestStatus } from "../../generated/prisma";
+import { paginationQuerySchema } from "../../lib/pagination.ts";
 
 export const reimbursementParamsSchema = z.object({
   params: z.object({
@@ -48,3 +49,13 @@ export const attachmentSchema = z.object({
     fileType: z.enum(AttachmentType),
   }),
 });
+
+export const listReimbursementsQuerySchema = paginationQuerySchema.extend({
+  search: z.string().trim().optional(),
+  categoryId: z.uuid().optional(),
+  status: z.enum(RequestStatus).optional(),
+  sortBy: z.enum(["createdAt", "expenseDate", "amount"]).default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export type ListReimbursementsQuery = z.infer<typeof listReimbursementsQuerySchema>;

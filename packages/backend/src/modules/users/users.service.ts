@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "../../generated/prisma/index";
 import { AppError } from "../../lib/AppError.ts";
-import { getPagination, paginatedResponse, type PaginationQuery } from "../../lib/pagination.ts";
+import { getPagination, paginatedResponse } from "../../lib/pagination.ts";
 import { prisma } from "../../lib/prisma.ts";
+import type { ListUsersQuery } from "./users.schemas.ts";
 
 type CreateUserInput = {
   name: string;
@@ -42,15 +43,27 @@ export async function createUser(data: CreateUserInput) {
   }
 }
 
-export async function listUsers({ page, limit }: PaginationQuery) {
+export async function listUsers({ page, limit, search, role }: ListUsersQuery) {
   const { skip, take } = getPagination(page, limit);
+  const where: Prisma.UserWhereInput = {
+    ...(role ? { role } : {}),
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
   const data = await prisma.user.findMany({
     skip,
     take,
+    where,
     orderBy: { createdAt: "desc" },
     select: userSelect,
   });
-  const total = await prisma.user.count();
+  const total = await prisma.user.count({ where });
 
   return paginatedResponse(data, { page, limit, total });
 }

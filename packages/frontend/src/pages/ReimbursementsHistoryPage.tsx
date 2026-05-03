@@ -1,7 +1,11 @@
 import * as React from 'react'
 import { Link } from 'react-router'
 import { Archive } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
@@ -10,17 +14,25 @@ import { PaginationControl } from '@/components/PaginationControl'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { listPastReimbursements } from '@/services/reimbursements.service'
-import type { ApiError, PaginationMeta, Reimbursement } from '@/types'
+import { listCategories } from '@/services/categories.service'
+import { listPastReimbursements, type ReimbursementListFilters } from '@/services/reimbursements.service'
+import type { ApiError, Category, PaginationMeta, Reimbursement, RequestStatus } from '@/types'
 
 const PAGE_SIZE = 10
 const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
+const historyStatuses: Array<{ value: RequestStatus; label: string }> = [
+  { value: 'APPROVED', label: 'Aprovada' },
+  { value: 'REJECTED', label: 'Rejeitada' },
+  { value: 'PAID', label: 'Paga' },
+]
 
 export function ReimbursementsHistoryPage() {
   const { user } = useAuth()
   const [items, setItems] = React.useState<Reimbursement[]>([])
   const [page, setPage] = React.useState(1)
   const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
+  const [categories, setCategories] = React.useState<Category[]>([])
+  const [filters, setFilters] = React.useState<ReimbursementListFilters>({ sortBy: 'createdAt', sortOrder: 'desc' })
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
   const description =
@@ -32,7 +44,7 @@ export function ReimbursementsHistoryPage() {
     setLoading(true)
     setError('')
     try {
-      const response = await listPastReimbursements(page, PAGE_SIZE)
+      const response = await listPastReimbursements(page, PAGE_SIZE, filters)
       if (response.data.length === 0 && response.meta.total > 0 && page > response.meta.totalPages) {
         setPage(response.meta.totalPages)
         return
@@ -44,11 +56,32 @@ export function ReimbursementsHistoryPage() {
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [filters, page])
 
   React.useEffect(() => {
     void load()
   }, [load])
+
+  React.useEffect(() => {
+    async function loadCategories() {
+      try {
+        const response = await listCategories(1, 100)
+        setCategories(response.data)
+      } catch {
+        setCategories([])
+      }
+    }
+    void loadCategories()
+  }, [])
+
+  function updateFilters(next: ReimbursementListFilters) {
+    setPage(1)
+    setFilters(next)
+  }
+
+  function clearFilters() {
+    updateFilters({ sortBy: 'createdAt', sortOrder: 'desc' })
+  }
 
   return (
     <div className="space-y-6">
@@ -61,6 +94,72 @@ export function ReimbursementsHistoryPage() {
           <p className="text-sm text-white/80">{description}.</p>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="space-y-2 lg:col-span-2">
+              <Label htmlFor="historySearch">Busca</Label>
+              <Input
+                id="historySearch"
+                placeholder="Descrição ou colaborador"
+                value={filters.search ?? ''}
+                onChange={(event) => updateFilters({ ...filters, search: event.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="historyCategory">Categoria</Label>
+              <Select
+                id="historyCategory"
+                value={filters.categoryId ?? ''}
+                onChange={(event) => updateFilters({ ...filters, categoryId: event.target.value })}
+              >
+                <option value="">Todas</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="historyStatus">Status</Label>
+              <Select
+                id="historyStatus"
+                value={filters.status ?? ''}
+                onChange={(event) => updateFilters({ ...filters, status: event.target.value as RequestStatus | '' })}
+              >
+                <option value="">Todos</option>
+                {historyStatuses.map((status) => (
+                  <option key={status.value} value={status.value}>{status.label}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="historySort">Ordenação</Label>
+              <Select
+                id="historySort"
+                value={`${filters.sortBy ?? 'createdAt'}:${filters.sortOrder ?? 'desc'}`}
+                onChange={(event) => {
+                  const [sortBy, sortOrder] = event.target.value.split(':') as [ReimbursementListFilters['sortBy'], ReimbursementListFilters['sortOrder']]
+                  updateFilters({ ...filters, sortBy, sortOrder })
+                }}
+              >
+                <option value="createdAt:desc">Mais recentes</option>
+                <option value="createdAt:asc">Mais antigas</option>
+                <option value="expenseDate:desc">Despesa mais recente</option>
+                <option value="expenseDate:asc">Despesa mais antiga</option>
+                <option value="amount:desc">Maior valor</option>
+                <option value="amount:asc">Menor valor</option>
+              </Select>
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button type="button" variant="outline" onClick={clearFilters}>Limpar filtros</Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {loading ? <LoadingTable /> : null}
       {error ? <ErrorState message={error} onRetry={() => void load()} /> : null}

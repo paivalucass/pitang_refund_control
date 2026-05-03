@@ -9,7 +9,7 @@ export const paginationQuerySchema = z.object({
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 
 type RequestWithValidatedQuery = Request & {
-  validatedQuery?: PaginationQuery;
+  validatedQuery?: unknown;
 };
 
 export type PaginatedResponse<T> = {
@@ -30,7 +30,11 @@ export function getPagination(page: number, limit: number) {
 }
 
 export function getPaginationQuery(req: Request): PaginationQuery {
-  return (req as RequestWithValidatedQuery).validatedQuery ?? paginationQuerySchema.parse(req.query);
+  return ((req as RequestWithValidatedQuery).validatedQuery ?? paginationQuerySchema.parse(req.query)) as PaginationQuery;
+}
+
+export function getValidatedQuery<T>(req: Request): T {
+  return (req as RequestWithValidatedQuery).validatedQuery as T;
 }
 
 export function paginatedResponse<T>(

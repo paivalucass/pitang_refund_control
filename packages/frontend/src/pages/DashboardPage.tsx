@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router'
 import { PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
 import { toast } from '@/components/ui/sonner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { EmptyState } from '@/components/EmptyState'
@@ -13,17 +16,27 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency, formatDate } from '@/lib/format'
+import { listCategories } from '@/services/categories.service'
 import {
   approveReimbursement,
   cancelReimbursement,
   listReimbursements,
   payReimbursement,
   submitReimbursement,
+  type ReimbursementListFilters,
 } from '@/services/reimbursements.service'
-import type { ApiError, PaginationMeta, Reimbursement } from '@/types'
+import type { ApiError, Category, PaginationMeta, Reimbursement, RequestStatus } from '@/types'
 
 const PAGE_SIZE = 10
 const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
+const requestStatuses: Array<{ value: RequestStatus; label: string }> = [
+  { value: 'DRAFT', label: 'Rascunho' },
+  { value: 'SUBMITTED', label: 'Enviada' },
+  { value: 'APPROVED', label: 'Aprovada' },
+  { value: 'REJECTED', label: 'Rejeitada' },
+  { value: 'PAID', label: 'Paga' },
+  { value: 'CANCELED', label: 'Cancelada' },
+]
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -31,6 +44,8 @@ export function DashboardPage() {
   const [items, setItems] = React.useState<Reimbursement[]>([])
   const [page, setPage] = React.useState(1)
   const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
+  const [categories, setCategories] = React.useState<Category[]>([])
+  const [filters, setFilters] = React.useState<ReimbursementListFilters>({ sortBy: 'createdAt', sortOrder: 'desc' })
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
   const [confirm, setConfirm] = React.useState<{ title: string; description: string; action: () => Promise<void> } | null>(null)
@@ -39,7 +54,7 @@ export function DashboardPage() {
     setLoading(true)
     setError('')
     try {
-      const response = await listReimbursements(page, PAGE_SIZE)
+      const response = await listReimbursements(page, PAGE_SIZE, filters)
       if (response.data.length === 0 && response.meta.total > 0 && page > response.meta.totalPages) {
         setPage(response.meta.totalPages)
         return
@@ -51,11 +66,32 @@ export function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [filters, page])
 
   React.useEffect(() => {
     void load()
   }, [load])
+
+  React.useEffect(() => {
+    async function loadCategories() {
+      try {
+        const response = await listCategories(1, 100)
+        setCategories(response.data)
+      } catch {
+        setCategories([])
+      }
+    }
+    void loadCategories()
+  }, [])
+
+  function updateFilters(next: ReimbursementListFilters) {
+    setPage(1)
+    setFilters(next)
+  }
+
+  function clearFilters() {
+    updateFilters({ sortBy: 'createdAt', sortOrder: 'desc' })
+  }
 
   function buildActions(request: Reimbursement) {
     if (!user) return null
@@ -136,6 +172,71 @@ export function DashboardPage() {
           ) : null}
         </div>
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="space-y-2 lg:col-span-2">
+              <Label htmlFor="requestSearch">Busca</Label>
+              <Input
+                id="requestSearch"
+                placeholder="Descrição ou colaborador"
+                value={filters.search ?? ''}
+                onChange={(event) => updateFilters({ ...filters, search: event.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="requestCategory">Categoria</Label>
+              <Select
+                id="requestCategory"
+                value={filters.categoryId ?? ''}
+                onChange={(event) => updateFilters({ ...filters, categoryId: event.target.value })}
+              >
+                <option value="">Todas</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="requestStatus">Status</Label>
+              <Select
+                id="requestStatus"
+                value={filters.status ?? ''}
+                onChange={(event) => updateFilters({ ...filters, status: event.target.value as RequestStatus | '' })}
+              >
+                <option value="">Todos</option>
+                {requestStatuses.map((status) => (
+                  <option key={status.value} value={status.value}>{status.label}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="requestSort">Ordenação</Label>
+              <Select
+                id="requestSort"
+                value={`${filters.sortBy ?? 'createdAt'}:${filters.sortOrder ?? 'desc'}`}
+                onChange={(event) => {
+                  const [sortBy, sortOrder] = event.target.value.split(':') as [ReimbursementListFilters['sortBy'], ReimbursementListFilters['sortOrder']]
+                  updateFilters({ ...filters, sortBy, sortOrder })
+                }}
+              >
+                <option value="createdAt:desc">Mais recentes</option>
+                <option value="createdAt:asc">Mais antigas</option>
+                <option value="expenseDate:desc">Despesa mais recente</option>
+                <option value="expenseDate:asc">Despesa mais antiga</option>
+                <option value="amount:desc">Maior valor</option>
+                <option value="amount:asc">Menor valor</option>
+              </Select>
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button type="button" variant="outline" onClick={clearFilters}>Limpar filtros</Button>
+          </div>
+        </CardContent>
+      </Card>
       {loading ? <LoadingTable /> : null}
       {error ? <ErrorState message={error} onRetry={() => void load()} /> : null}
       {!loading && !error && items.length === 0 ? (

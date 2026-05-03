@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { UserRole } from "../../generated/prisma";
+import { paginationQuerySchema } from "../../lib/pagination.ts";
 
 export const createUserSchema = z.object({
   body: z.object({
@@ -9,3 +10,10 @@ export const createUserSchema = z.object({
     role: z.enum(UserRole),
   }),
 });
+
+export const listUsersQuerySchema = paginationQuerySchema.extend({
+  search: z.string().trim().optional(),
+  role: z.enum(UserRole).optional(),
+});
+
+export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;

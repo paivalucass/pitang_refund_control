@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
-import { getPaginationQuery } from "../../lib/pagination.ts";
+import { getValidatedQuery } from "../../lib/pagination.ts";
+import type { ListCategoriesQuery } from "./categories.schemas.ts";
 import * as categoriesService from "./categories.service.ts";
 
 function getId(req: Request): string {
@@ -7,7 +8,7 @@ function getId(req: Request): string {
 }
 
 export async function list(req: Request, res: Response): Promise<void> {
-  const categories = await categoriesService.listCategories(getPaginationQuery(req));
+  const categories = await categoriesService.listCategories(getValidatedQuery<ListCategoriesQuery>(req));
   res.json(categories);
 }
 

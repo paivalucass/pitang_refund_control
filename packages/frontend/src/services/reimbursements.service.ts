@@ -1,5 +1,5 @@
 import { apiFetch } from '@/services/api'
-import type { Attachment, AttachmentType, PaginatedResponse, Reimbursement, RequestHistory } from '@/types'
+import type { Attachment, AttachmentType, PaginatedResponse, Reimbursement, RequestHistory, RequestStatus } from '@/types'
 
 export type ReimbursementFormData = {
   categoryId: string
@@ -8,12 +8,30 @@ export type ReimbursementFormData = {
   expenseDate: string
 }
 
-export function listReimbursements(page = 1, limit = 10) {
-  return apiFetch<PaginatedResponse<Reimbursement>>(`/reimbursements?page=${page}&limit=${limit}`)
+export type ReimbursementListFilters = {
+  search?: string
+  categoryId?: string
+  status?: RequestStatus | ''
+  sortBy?: 'createdAt' | 'expenseDate' | 'amount'
+  sortOrder?: 'asc' | 'desc'
 }
 
-export function listPastReimbursements(page = 1, limit = 10) {
-  return apiFetch<PaginatedResponse<Reimbursement>>(`/reimbursements/history?page=${page}&limit=${limit}`)
+function buildReimbursementParams(page: number, limit: number, filters: ReimbursementListFilters) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+  if (filters.search) params.set('search', filters.search)
+  if (filters.categoryId) params.set('categoryId', filters.categoryId)
+  if (filters.status) params.set('status', filters.status)
+  if (filters.sortBy) params.set('sortBy', filters.sortBy)
+  if (filters.sortOrder) params.set('sortOrder', filters.sortOrder)
+  return params.toString()
+}
+
+export function listReimbursements(page = 1, limit = 10, filters: ReimbursementListFilters = {}) {
+  return apiFetch<PaginatedResponse<Reimbursement>>(`/reimbursements?${buildReimbursementParams(page, limit, filters)}`)
+}
+
+export function listPastReimbursements(page = 1, limit = 10, filters: ReimbursementListFilters = {}) {
+  return apiFetch<PaginatedResponse<Reimbursement>>(`/reimbursements/history?${buildReimbursementParams(page, limit, filters)}`)
 }
 
 export function getReimbursement(id: string) {

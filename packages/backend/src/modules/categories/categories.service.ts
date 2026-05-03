@@ -1,7 +1,8 @@
 import { Prisma } from "../../generated/prisma/index";
 import { AppError } from "../../lib/AppError.ts";
-import { getPagination, paginatedResponse, type PaginationQuery } from "../../lib/pagination.ts";
+import { getPagination, paginatedResponse } from "../../lib/pagination.ts";
 import { prisma } from "../../lib/prisma.ts";
+import type { ListCategoriesQuery } from "./categories.schemas.ts";
 
 type CreateCategoryInput = {
   name: string;
@@ -12,14 +13,19 @@ type UpdateCategoryInput = {
   active?: boolean;
 };
 
-export async function listCategories({ page, limit }: PaginationQuery) {
+export async function listCategories({ page, limit, search, active }: ListCategoriesQuery) {
   const { skip, take } = getPagination(page, limit);
+  const where: Prisma.CategoryWhereInput = {
+    ...(active !== undefined ? { active } : {}),
+    ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
+  };
   const data = await prisma.category.findMany({
     skip,
     take,
+    where,
     orderBy: { name: "asc" },
   });
-  const total = await prisma.category.count();
+  const total = await prisma.category.count({ where });
 
   return paginatedResponse(data, { page, limit, total });
 }

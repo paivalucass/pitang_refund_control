@@ -6,13 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
 import { toast } from '@/components/ui/sonner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
 import { PaginationControl } from '@/components/PaginationControl'
 import { formatDate } from '@/lib/format'
-import { createCategory, listCategories, updateCategory } from '@/services/categories.service'
+import { createCategory, listCategories, updateCategory, type CategoryListFilters } from '@/services/categories.service'
 import type { ApiError, Category, PaginationMeta } from '@/types'
 
 const PAGE_SIZE = 10
@@ -22,6 +23,7 @@ export function CategoriesPage() {
   const [categories, setCategories] = React.useState<Category[]>([])
   const [page, setPage] = React.useState(1)
   const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
+  const [filters, setFilters] = React.useState<CategoryListFilters>({})
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
   const [dialogOpen, setDialogOpen] = React.useState(false)
@@ -32,7 +34,7 @@ export function CategoriesPage() {
     setLoading(true)
     setError('')
     try {
-      const response = await listCategories(page, PAGE_SIZE)
+      const response = await listCategories(page, PAGE_SIZE, filters)
       if (response.data.length === 0 && response.meta.total > 0 && page > response.meta.totalPages) {
         setPage(response.meta.totalPages)
         return
@@ -44,11 +46,20 @@ export function CategoriesPage() {
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [filters, page])
 
   React.useEffect(() => {
     void load()
   }, [load])
+
+  function updateFilters(next: CategoryListFilters) {
+    setPage(1)
+    setFilters(next)
+  }
+
+  function clearFilters() {
+    updateFilters({})
+  }
 
   function openCreate() {
     setEditing(null)
@@ -104,6 +115,33 @@ export function CategoriesPage() {
         <Card>
           <CardHeader><CardTitle>Lista de categorias</CardTitle></CardHeader>
           <CardContent>
+            <div className="mb-4 grid gap-4 md:grid-cols-[1fr_14rem_auto] md:items-end">
+              <div className="space-y-2">
+                <Label htmlFor="categorySearch">Busca</Label>
+                <Input
+                  id="categorySearch"
+                  placeholder="Nome da categoria"
+                  value={filters.search ?? ''}
+                  onChange={(event) => updateFilters({ ...filters, search: event.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="categoryActive">Status</Label>
+                <Select
+                  id="categoryActive"
+                  value={filters.active === '' || filters.active === undefined ? '' : String(filters.active)}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    updateFilters({ ...filters, active: value === '' ? '' : value === 'true' })
+                  }}
+                >
+                  <option value="">Todas</option>
+                  <option value="true">Ativas</option>
+                  <option value="false">Inativas</option>
+                </Select>
+              </div>
+              <Button type="button" variant="outline" onClick={clearFilters}>Limpar</Button>
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>

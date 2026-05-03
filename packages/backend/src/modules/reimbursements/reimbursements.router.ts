@@ -22,6 +22,7 @@ import {
 import {
   attachmentSchema,
   createReimbursementSchema,
+  listReimbursementsQuerySchema,
   reimbursementParamsSchema,
   rejectReimbursementSchema,
   updateReimbursementSchema,
@@ -34,13 +35,13 @@ reimbursementsRouter.use(authenticate);
 
 reimbursementsRouter.get(
   "/",
-  validate(z.object({ query: paginationQuerySchema })),
+  validate(z.object({ query: listReimbursementsQuerySchema })),
   list
 );
 reimbursementsRouter.get(
   "/history",
   authorize(UserRole.MANAGER, UserRole.FINANCE),
-  validate(z.object({ query: paginationQuerySchema })),
+  validate(z.object({ query: listReimbursementsQuerySchema })),
   past
 );
 reimbursementsRouter.post(

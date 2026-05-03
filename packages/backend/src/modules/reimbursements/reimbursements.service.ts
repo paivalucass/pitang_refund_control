@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 import { AppError } from "../../lib/AppError.ts";
 import { getPagination, paginatedResponse, type PaginationQuery } from "../../lib/pagination.ts";
 import { prisma } from "../../lib/prisma.ts";
+import type { ListReimbursementsQuery } from "./reimbursements.schemas.ts";
 
 type AuthUser = {
   id: string;
@@ -32,6 +33,11 @@ type AttachmentInput = {
   fileUrl: string;
   fileType: AttachmentType;
 };
+
+type ReimbursementFilterQuery = Pick<
+  ListReimbursementsQuery,
+  "search" | "categoryId" | "status" | "sortBy" | "sortOrder"
+>;
 
 const reimbursementInclude = {
   category: true,
@@ -112,9 +118,44 @@ function ensureCanView(
   throw new AppError("Você não tem permissão para acessar esta solicitação", 403);
 }
 
+function buildReimbursementWhere(
+  baseWhere: Prisma.ReimbursementWhereInput,
+  { search, categoryId, status }: ReimbursementFilterQuery
+): Prisma.ReimbursementWhereInput {
+  const filters: Prisma.ReimbursementWhereInput[] = [baseWhere];
+
+  if (categoryId) {
+    filters.push({ categoryId });
+  }
+
+  if (status) {
+    filters.push({ status });
+  }
+
+  if (search) {
+    filters.push({
+      OR: [
+        { description: { contains: search, mode: "insensitive" } },
+        { requester: { name: { contains: search, mode: "insensitive" } } },
+        { requester: { email: { contains: search, mode: "insensitive" } } },
+      ],
+    });
+  }
+
+  return { AND: filters };
+}
+
+function buildReimbursementOrderBy(
+  { sortBy, sortOrder }: ReimbursementFilterQuery,
+  fallback: Prisma.ReimbursementOrderByWithRelationInput
+): Prisma.ReimbursementOrderByWithRelationInput {
+  if (!sortBy) return fallback;
+  return { [sortBy]: sortOrder ?? "desc" };
+}
+
 export async function listPastReimbursements(
   userInput: AuthUser | undefined,
-  { page, limit }: PaginationQuery
+  { page, limit, ...filters }: ListReimbursementsQuery
 ) {
   const user = requireUser(userInput);
 
@@ -127,18 +168,19 @@ export async function listPastReimbursements(
       ? [RequestStatus.APPROVED, RequestStatus.PAID, RequestStatus.REJECTED]
       : [RequestStatus.PAID];
 
-  const where: Prisma.ReimbursementWhereInput = {
+  const baseWhere: Prisma.ReimbursementWhereInput = {
     status: {
       in: statuses,
     },
   };
+  const where = buildReimbursementWhere(baseWhere, filters);
   const { skip, take } = getPagination(page, limit);
   const data = await prisma.reimbursement.findMany({
     skip,
     take,
     where,
     include: reimbursementInclude,
-    orderBy: { updatedAt: "desc" },
+    orderBy: buildReimbursementOrderBy(filters, { updatedAt: "desc" }),
   });
   const total = await prisma.reimbursement.count({ where });
 
@@ -164,11 +206,11 @@ async function createHistory(
 
 export async function listReimbursements(
   userInput: AuthUser | undefined,
-  { page, limit }: PaginationQuery
+  { page, limit, ...filters }: ListReimbursementsQuery
 ) {
   const user = requireUser(userInput);
 
-  const where: Prisma.ReimbursementWhereInput =
+  const baseWhere: Prisma.ReimbursementWhereInput =
     user.role === UserRole.EMPLOYEE
       ? { requesterId: user.id }
       : user.role === UserRole.MANAGER
@@ -177,13 +219,14 @@ export async function listReimbursements(
           ? { status: RequestStatus.APPROVED }
           : {};
 
+  const where = buildReimbursementWhere(baseWhere, filters);
   const { skip, take } = getPagination(page, limit);
   const data = await prisma.reimbursement.findMany({
     skip,
     take,
     where,
     include: reimbursementInclude,
-    orderBy: { createdAt: "desc" },
+    orderBy: buildReimbursementOrderBy(filters, { createdAt: "desc" }),
   });
   const total = await prisma.reimbursement.count({ where });
 

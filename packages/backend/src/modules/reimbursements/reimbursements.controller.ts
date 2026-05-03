@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
-import { getPaginationQuery } from "../../lib/pagination.ts";
+import { getPaginationQuery, getValidatedQuery } from "../../lib/pagination.ts";
+import type { ListReimbursementsQuery } from "./reimbursements.schemas.ts";
 import * as reimbursementsService from "./reimbursements.service.ts";
 
 function getId(req: Request): string {
@@ -9,7 +10,7 @@ function getId(req: Request): string {
 export async function list(req: Request, res: Response): Promise<void> {
   const reimbursements = await reimbursementsService.listReimbursements(
     req.user,
-    getPaginationQuery(req)
+    getValidatedQuery<ListReimbursementsQuery>(req)
   );
   res.json(reimbursements);
 }
@@ -17,7 +18,7 @@ export async function list(req: Request, res: Response): Promise<void> {
 export async function past(req: Request, res: Response): Promise<void> {
   const reimbursements = await reimbursementsService.listPastReimbursements(
     req.user,
-    getPaginationQuery(req)
+    getValidatedQuery<ListReimbursementsQuery>(req)
   );
   res.json(reimbursements);
 }

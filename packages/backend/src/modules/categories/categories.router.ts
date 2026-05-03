@@ -3,10 +3,10 @@ import { UserRole } from "../../generated/prisma/index";
 import { authenticate } from "../../middlewares/authenticate.ts";
 import { authorize } from "../../middlewares/authorize.ts";
 import { validate } from "../../middlewares/validate.ts";
-import { paginationQuerySchema } from "../../lib/pagination.ts";
 import { create, list, update } from "./categories.controller.ts";
 import {
   createCategorySchema,
+  listCategoriesQuerySchema,
   updateCategorySchema,
 } from "./categories.schemas.ts";
 import { z } from "zod";
@@ -16,7 +16,7 @@ export const categoriesRouter = Router();
 categoriesRouter.get(
   "/",
   authenticate,
-  validate(z.object({ query: paginationQuerySchema })),
+  validate(z.object({ query: listCategoriesQuerySchema })),
   list
 );
 categoriesRouter.post(
