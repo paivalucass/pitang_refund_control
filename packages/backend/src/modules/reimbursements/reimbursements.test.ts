@@ -204,15 +204,16 @@ describe("reimbursements routes", () => {
       .get("/reimbursements")
       .set(auth(admin.token));
 
-    expect(employeeList.body.map((item: { id: string }) => item.id)).toEqual(
+    expect(employeeList.body.data.map((item: { id: string }) => item.id)).toEqual(
       expect.arrayContaining([draft.id, submitted.id, approved.id])
     );
-    expect(managerList.body.map((item: { id: string }) => item.id)).toEqual([
+    expect(managerList.body.data.map((item: { id: string }) => item.id)).toEqual([
       submitted.id,
     ]);
-    expect(financeList.body.map((item: { id: string }) => item.id)).toEqual([
+    expect(financeList.body.data.map((item: { id: string }) => item.id)).toEqual([
       approved.id,
     ]);
-    expect(adminList.body).toHaveLength(3);
+    expect(adminList.body.data).toHaveLength(3);
+    expect(adminList.body.meta).toMatchObject({ page: 1, limit: 10, total: 3, totalPages: 1 });
   });
 });

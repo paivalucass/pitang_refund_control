@@ -1,8 +1,8 @@
 import { apiFetch } from '@/services/api'
-import type { Category } from '@/types'
+import type { Category, PaginatedResponse } from '@/types'
 
-export function listCategories() {
-  return apiFetch<Category[]>('/categories')
+export function listCategories(page = 1, limit = 10) {
+  return apiFetch<PaginatedResponse<Category>>(`/categories?page=${page}&limit=${limit}`)
 }
 
 export function createCategory(name: string) {

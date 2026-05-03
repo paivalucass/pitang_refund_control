@@ -3,13 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
+import { PaginationControl } from '@/components/PaginationControl'
 import { RoleBadge } from '@/components/RoleBadge'
 import { formatDate } from '@/lib/format'
 import { listUsers } from '@/services/users.service'
-import type { ApiError, User } from '@/types'
+import type { ApiError, PaginationMeta, User } from '@/types'
+
+const PAGE_SIZE = 10
+const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
 
 export function UsersPage() {
   const [users, setUsers] = React.useState<User[]>([])
+  const [page, setPage] = React.useState(1)
+  const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
 
@@ -17,13 +23,19 @@ export function UsersPage() {
     setLoading(true)
     setError('')
     try {
-      setUsers(await listUsers())
+      const response = await listUsers(page, PAGE_SIZE)
+      if (response.data.length === 0 && response.meta.total > 0 && page > response.meta.totalPages) {
+        setPage(response.meta.totalPages)
+        return
+      }
+      setUsers(response.data)
+      setMeta(response.meta)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível carregar usuários.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page])
 
   React.useEffect(() => {
     void load()
@@ -61,6 +73,7 @@ export function UsersPage() {
                 ))}
               </TableBody>
             </Table>
+            <PaginationControl currentPage={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
           </CardContent>
         </Card>
       ) : null}

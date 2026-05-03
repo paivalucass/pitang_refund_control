@@ -12,7 +12,9 @@ import type { ApiError } from '@/types'
 
 export function NewReimbursementPage() {
   const navigate = useNavigate()
-  const { data: categories, loading, error, refetch } = useApi(listCategories)
+  const loadCategories = React.useCallback(() => listCategories(1, 100), [])
+  const { data: categoriesResponse, loading, error, refetch } = useApi(loadCategories)
+  const categories = categoriesResponse?.data
   const [saving, setSaving] = React.useState(false)
   const [saveError, setSaveError] = React.useState('')
 
@@ -44,7 +46,7 @@ export function NewReimbursementPage() {
       {loading ? <LoadingTable rows={3} /> : null}
       {error ? <ErrorState message={error.message} onRetry={() => void refetch()} /> : null}
       {categories ? (
-        <Card className="min-h-[28rem]">
+        <Card>
           <CardHeader>
             <CardTitle>Dados da despesa</CardTitle>
             <CardDescription>Todos os campos são obrigatórios.</CardDescription>

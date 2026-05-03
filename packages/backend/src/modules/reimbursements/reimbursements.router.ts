@@ -3,6 +3,7 @@ import { UserRole } from "../../generated/prisma/index";
 import { authenticate } from "../../middlewares/authenticate.ts";
 import { authorize } from "../../middlewares/authorize.ts";
 import { validate } from "../../middlewares/validate.ts";
+import { paginationQuerySchema } from "../../lib/pagination.ts";
 import {
   addAttachment,
   approve,
@@ -25,6 +26,7 @@ import {
   rejectReimbursementSchema,
   updateReimbursementSchema,
 } from "./reimbursements.schemas.ts";
+import { z } from "zod";
 
 export const reimbursementsRouter = Router();
 
@@ -32,11 +34,13 @@ reimbursementsRouter.use(authenticate);
 
 reimbursementsRouter.get(
   "/",
+  validate(z.object({ query: paginationQuerySchema })),
   list
 );
 reimbursementsRouter.get(
   "/history",
   authorize(UserRole.MANAGER, UserRole.FINANCE),
+  validate(z.object({ query: paginationQuerySchema })),
   past
 );
 reimbursementsRouter.post(
@@ -88,7 +92,10 @@ reimbursementsRouter.post(
 );
 reimbursementsRouter.get(
   "/:id/history",
-  validate(reimbursementParamsSchema),
+  validate(z.object({
+    params: reimbursementParamsSchema.shape.params,
+    query: paginationQuerySchema,
+  })),
   history
 );
 reimbursementsRouter.post(
@@ -99,6 +106,9 @@ reimbursementsRouter.post(
 );
 reimbursementsRouter.get(
   "/:id/attachments",
-  validate(reimbursementParamsSchema),
+  validate(z.object({
+    params: reimbursementParamsSchema.shape.params,
+    query: paginationQuerySchema,
+  })),
   listAttachments
 );

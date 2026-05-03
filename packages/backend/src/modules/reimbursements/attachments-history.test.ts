@@ -34,7 +34,8 @@ describe("reimbursement attachments and history", () => {
       fileType: "PDF",
     });
     expect(listed.status).toBe(200);
-    expect(listed.body).toHaveLength(1);
+    expect(listed.body.data).toHaveLength(1);
+    expect(listed.body.meta).toMatchObject({ page: 1, limit: 10, total: 1, totalPages: 1 });
   });
 
   it("rejects invalid attachment file types", async () => {
@@ -107,7 +108,7 @@ describe("reimbursement attachments and history", () => {
       .set(auth(employee.token));
 
     expect(history.status).toBe(200);
-    expect(history.body.map((entry: { action: string }) => entry.action)).toEqual([
+    expect(history.body.data.map((entry: { action: string }) => entry.action)).toEqual([
       "CREATED",
       "UPDATED",
       "SUBMITTED",
@@ -136,7 +137,7 @@ describe("reimbursement attachments and history", () => {
       .set(auth(employee.token));
 
     expect(history.status).toBe(200);
-    expect(history.body.map((entry: { action: string }) => entry.action)).toContain(
+    expect(history.body.data.map((entry: { action: string }) => entry.action)).toContain(
       "REJECTED"
     );
   });

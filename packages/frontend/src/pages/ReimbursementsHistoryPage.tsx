@@ -6,15 +6,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
+import { PaginationControl } from '@/components/PaginationControl'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { listPastReimbursements } from '@/services/reimbursements.service'
-import type { ApiError, Reimbursement } from '@/types'
+import type { ApiError, PaginationMeta, Reimbursement } from '@/types'
+
+const PAGE_SIZE = 10
+const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
 
 export function ReimbursementsHistoryPage() {
   const { user } = useAuth()
   const [items, setItems] = React.useState<Reimbursement[]>([])
+  const [page, setPage] = React.useState(1)
+  const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
   const description =
@@ -26,13 +32,19 @@ export function ReimbursementsHistoryPage() {
     setLoading(true)
     setError('')
     try {
-      setItems(await listPastReimbursements())
+      const response = await listPastReimbursements(page, PAGE_SIZE)
+      if (response.data.length === 0 && response.meta.total > 0 && page > response.meta.totalPages) {
+        setPage(response.meta.totalPages)
+        return
+      }
+      setItems(response.data)
+      setMeta(response.meta)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível carregar o histórico.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page])
 
   React.useEffect(() => {
     void load()
@@ -61,7 +73,7 @@ export function ReimbursementsHistoryPage() {
       ) : null}
 
       {items.length > 0 ? (
-        <Card className="min-h-[28rem]">
+        <Card>
           <CardHeader>
             <CardTitle>Histórico de solicitações</CardTitle>
           </CardHeader>
@@ -99,6 +111,7 @@ export function ReimbursementsHistoryPage() {
                 ))}
               </TableBody>
             </Table>
+            <PaginationControl currentPage={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
           </CardContent>
         </Card>
       ) : null}

@@ -1,5 +1,6 @@
 import { Prisma } from "../../generated/prisma/index";
 import { AppError } from "../../lib/AppError.ts";
+import { getPagination, paginatedResponse, type PaginationQuery } from "../../lib/pagination.ts";
 import { prisma } from "../../lib/prisma.ts";
 
 type CreateCategoryInput = {
@@ -11,10 +12,16 @@ type UpdateCategoryInput = {
   active?: boolean;
 };
 
-export async function listCategories() {
-  return prisma.category.findMany({
+export async function listCategories({ page, limit }: PaginationQuery) {
+  const { skip, take } = getPagination(page, limit);
+  const data = await prisma.category.findMany({
+    skip,
+    take,
     orderBy: { name: "asc" },
   });
+  const total = await prisma.category.count();
+
+  return paginatedResponse(data, { page, limit, total });
 }
 
 export async function createCategory(data: CreateCategoryInput) {

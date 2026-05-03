@@ -5,9 +5,12 @@ import { NewReimbursementPage } from '@/pages/NewReimbursementPage'
 import { createReimbursement } from '@/services/reimbursements.service'
 
 jest.mock('@/services/categories.service', () => ({
-  listCategories: jest.fn().mockResolvedValue([
-    { id: 'cat-1', name: 'Alimentação', active: true, createdAt: '', updatedAt: '' },
-  ]),
+  listCategories: jest.fn().mockResolvedValue({
+    data: [
+      { id: 'cat-1', name: 'Alimentação', active: true, createdAt: '', updatedAt: '' },
+    ],
+    meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
+  }),
 }))
 
 jest.mock('@/services/reimbursements.service', () => ({

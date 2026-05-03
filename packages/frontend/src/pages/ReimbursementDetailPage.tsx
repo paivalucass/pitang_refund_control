@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
+import { PaginationControl } from '@/components/PaginationControl'
 import { RoleBadge } from '@/components/RoleBadge'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useAuth } from '@/contexts/AuthContext'
@@ -22,11 +23,15 @@ import {
   cancelReimbursement,
   getHistory,
   getReimbursement,
+  listAttachments,
   payReimbursement,
   rejectReimbursement,
   submitReimbursement,
 } from '@/services/reimbursements.service'
-import type { ApiError, AttachmentType, Reimbursement, RequestHistory } from '@/types'
+import type { ApiError, Attachment, AttachmentType, PaginationMeta, Reimbursement, RequestHistory } from '@/types'
+
+const PAGE_SIZE = 10
+const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
 
 export function ReimbursementDetailPage() {
   const { id = '' } = useParams()
@@ -34,6 +39,11 @@ export function ReimbursementDetailPage() {
   const { user } = useAuth()
   const [request, setRequest] = React.useState<Reimbursement | null>(null)
   const [history, setHistory] = React.useState<RequestHistory[]>([])
+  const [attachments, setAttachments] = React.useState<Attachment[]>([])
+  const [historyPage, setHistoryPage] = React.useState(1)
+  const [attachmentsPage, setAttachmentsPage] = React.useState(1)
+  const [historyMeta, setHistoryMeta] = React.useState<PaginationMeta>(initialMeta)
+  const [attachmentsMeta, setAttachmentsMeta] = React.useState<PaginationMeta>(initialMeta)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
   const [confirm, setConfirm] = React.useState<{ title: string; description: string; action: () => Promise<void> } | null>(null)
@@ -46,15 +56,30 @@ export function ReimbursementDetailPage() {
     setLoading(true)
     setError('')
     try {
-      const [requestData, historyData] = await Promise.all([getReimbursement(id), getHistory(id)])
+      const [requestData, historyData, attachmentsData] = await Promise.all([
+        getReimbursement(id),
+        getHistory(id, historyPage, PAGE_SIZE),
+        listAttachments(id, attachmentsPage, PAGE_SIZE),
+      ])
+      if (historyData.data.length === 0 && historyData.meta.total > 0 && historyPage > historyData.meta.totalPages) {
+        setHistoryPage(historyData.meta.totalPages)
+        return
+      }
+      if (attachmentsData.data.length === 0 && attachmentsData.meta.total > 0 && attachmentsPage > attachmentsData.meta.totalPages) {
+        setAttachmentsPage(attachmentsData.meta.totalPages)
+        return
+      }
       setRequest(requestData)
-      setHistory(historyData)
+      setHistory(historyData.data)
+      setHistoryMeta(historyData.meta)
+      setAttachments(attachmentsData.data)
+      setAttachmentsMeta(attachmentsData.meta)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível carregar a solicitação.')
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [attachmentsPage, historyPage, id])
 
   React.useEffect(() => {
     void load()
@@ -87,6 +112,7 @@ export function ReimbursementDetailPage() {
     toast.success('Anexo adicionado com sucesso.')
     setAttachment({ fileName: '', fileUrl: '', fileType: 'PDF' })
     setAttachmentOpen(false)
+    setAttachmentsPage(1)
     await load()
   }
 
@@ -167,14 +193,19 @@ export function ReimbursementDetailPage() {
                 <CardTitle>Anexos</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {request.attachments.length === 0 ? <p className="text-sm text-slate-500">Nenhum anexo cadastrado.</p> : null}
-                {request.attachments.map((item) => (
+                {attachments.length === 0 ? <p className="text-sm text-slate-500">Nenhum anexo cadastrado.</p> : null}
+                {attachments.map((item) => (
                   <a className="flex items-center gap-3 rounded-md border p-3 text-sm hover:bg-slate-50" href={item.fileUrl} key={item.id} target="_blank">
                     <File className="h-4 w-4" />
                     <span className="flex-1 truncate">{item.fileName}</span>
                     <span className="text-xs text-slate-500">{item.fileType}</span>
                   </a>
                 ))}
+                <PaginationControl
+                  currentPage={attachmentsMeta.page}
+                  totalPages={attachmentsMeta.totalPages}
+                  onPageChange={setAttachmentsPage}
+                />
               </CardContent>
             </Card>
           </div>
@@ -191,6 +222,7 @@ export function ReimbursementDetailPage() {
                   {item.note ? <p className="mt-1 text-sm">{item.note}</p> : null}
                 </div>
               ))}
+              <PaginationControl currentPage={historyMeta.page} totalPages={historyMeta.totalPages} onPageChange={setHistoryPage} />
             </CardContent>
           </Card>
 

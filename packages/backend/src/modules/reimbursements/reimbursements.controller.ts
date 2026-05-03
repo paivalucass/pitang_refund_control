@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { getPaginationQuery } from "../../lib/pagination.ts";
 import * as reimbursementsService from "./reimbursements.service.ts";
 
 function getId(req: Request): string {
@@ -6,12 +7,18 @@ function getId(req: Request): string {
 }
 
 export async function list(req: Request, res: Response): Promise<void> {
-  const reimbursements = await reimbursementsService.listReimbursements(req.user);
+  const reimbursements = await reimbursementsService.listReimbursements(
+    req.user,
+    getPaginationQuery(req)
+  );
   res.json(reimbursements);
 }
 
 export async function past(req: Request, res: Response): Promise<void> {
-  const reimbursements = await reimbursementsService.listPastReimbursements(req.user);
+  const reimbursements = await reimbursementsService.listPastReimbursements(
+    req.user,
+    getPaginationQuery(req)
+  );
   res.json(reimbursements);
 }
 
@@ -82,7 +89,11 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 }
 
 export async function history(req: Request, res: Response): Promise<void> {
-  const entries = await reimbursementsService.getHistory(getId(req), req.user);
+  const entries = await reimbursementsService.getHistory(
+    getId(req),
+    req.user,
+    getPaginationQuery(req)
+  );
   res.json(entries);
 }
 
@@ -98,7 +109,8 @@ export async function addAttachment(req: Request, res: Response): Promise<void> 
 export async function listAttachments(req: Request, res: Response): Promise<void> {
   const attachments = await reimbursementsService.listAttachments(
     getId(req),
-    req.user
+    req.user,
+    getPaginationQuery(req)
   );
   res.json(attachments);
 }

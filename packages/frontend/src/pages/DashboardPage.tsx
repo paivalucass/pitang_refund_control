@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
+import { PaginationControl } from '@/components/PaginationControl'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useAuth } from '@/contexts/AuthContext'
@@ -19,12 +20,17 @@ import {
   payReimbursement,
   submitReimbursement,
 } from '@/services/reimbursements.service'
-import type { ApiError, Reimbursement } from '@/types'
+import type { ApiError, PaginationMeta, Reimbursement } from '@/types'
+
+const PAGE_SIZE = 10
+const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
 
 export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [items, setItems] = React.useState<Reimbursement[]>([])
+  const [page, setPage] = React.useState(1)
+  const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
   const [confirm, setConfirm] = React.useState<{ title: string; description: string; action: () => Promise<void> } | null>(null)
@@ -33,13 +39,19 @@ export function DashboardPage() {
     setLoading(true)
     setError('')
     try {
-      setItems(await listReimbursements())
+      const response = await listReimbursements(page, PAGE_SIZE)
+      if (response.data.length === 0 && response.meta.total > 0 && page > response.meta.totalPages) {
+        setPage(response.meta.totalPages)
+        return
+      }
+      setItems(response.data)
+      setMeta(response.meta)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível carregar solicitações.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page])
 
   React.useEffect(() => {
     void load()
@@ -140,7 +152,7 @@ export function DashboardPage() {
         />
       ) : null}
       {items.length > 0 ? (
-        <Card className="min-h-[28rem]">
+        <Card>
           <CardHeader>
             <CardTitle>Solicitações</CardTitle>
           </CardHeader>
@@ -180,6 +192,7 @@ export function DashboardPage() {
                 ))}
               </TableBody>
             </Table>
+            <PaginationControl currentPage={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
           </CardContent>
         </Card>
       ) : null}

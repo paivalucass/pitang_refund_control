@@ -10,12 +10,18 @@ import { toast } from '@/components/ui/sonner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
+import { PaginationControl } from '@/components/PaginationControl'
 import { formatDate } from '@/lib/format'
 import { createCategory, listCategories, updateCategory } from '@/services/categories.service'
-import type { ApiError, Category } from '@/types'
+import type { ApiError, Category, PaginationMeta } from '@/types'
+
+const PAGE_SIZE = 10
+const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
 
 export function CategoriesPage() {
   const [categories, setCategories] = React.useState<Category[]>([])
+  const [page, setPage] = React.useState(1)
+  const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
   const [dialogOpen, setDialogOpen] = React.useState(false)
@@ -26,13 +32,19 @@ export function CategoriesPage() {
     setLoading(true)
     setError('')
     try {
-      setCategories(await listCategories())
+      const response = await listCategories(page, PAGE_SIZE)
+      if (response.data.length === 0 && response.meta.total > 0 && page > response.meta.totalPages) {
+        setPage(response.meta.totalPages)
+        return
+      }
+      setCategories(response.data)
+      setMeta(response.meta)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível carregar categorias.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page])
 
   React.useEffect(() => {
     void load()
@@ -61,7 +73,11 @@ export function CategoriesPage() {
       toast.success('Categoria criada com sucesso.')
     }
     setDialogOpen(false)
-    await load()
+    if (page === 1) {
+      await load()
+    } else {
+      setPage(1)
+    }
   }
 
   async function toggleActive(category: Category) {
@@ -119,6 +135,7 @@ export function CategoriesPage() {
                 ))}
               </TableBody>
             </Table>
+            <PaginationControl currentPage={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
           </CardContent>
         </Card>
       ) : null}

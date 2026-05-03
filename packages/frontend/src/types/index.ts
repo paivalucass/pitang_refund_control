@@ -82,3 +82,15 @@ export type LoginResponse = {
   token: string
   user: User
 }
+
+export type PaginationMeta = {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+export type PaginatedResponse<T> = {
+  data: T[]
+  meta: PaginationMeta
+}

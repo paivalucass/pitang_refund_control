@@ -9,6 +9,7 @@ import {
 
 import dayjs from "dayjs";
 import { AppError } from "../../lib/AppError.ts";
+import { getPagination, paginatedResponse, type PaginationQuery } from "../../lib/pagination.ts";
 import { prisma } from "../../lib/prisma.ts";
 
 type AuthUser = {
@@ -111,7 +112,10 @@ function ensureCanView(
   throw new AppError("Você não tem permissão para acessar esta solicitação", 403);
 }
 
-export async function listPastReimbursements(userInput?: AuthUser) {
+export async function listPastReimbursements(
+  userInput: AuthUser | undefined,
+  { page, limit }: PaginationQuery
+) {
   const user = requireUser(userInput);
 
   if (user.role !== UserRole.MANAGER && user.role !== UserRole.FINANCE) {
@@ -123,15 +127,22 @@ export async function listPastReimbursements(userInput?: AuthUser) {
       ? [RequestStatus.APPROVED, RequestStatus.PAID, RequestStatus.REJECTED]
       : [RequestStatus.PAID];
 
-  return prisma.reimbursement.findMany({
-    where: {
-      status: {
-        in: statuses,
-      },
+  const where: Prisma.ReimbursementWhereInput = {
+    status: {
+      in: statuses,
     },
+  };
+  const { skip, take } = getPagination(page, limit);
+  const data = await prisma.reimbursement.findMany({
+    skip,
+    take,
+    where,
     include: reimbursementInclude,
     orderBy: { updatedAt: "desc" },
   });
+  const total = await prisma.reimbursement.count({ where });
+
+  return paginatedResponse(data, { page, limit, total });
 }
 
 async function createHistory(
@@ -151,7 +162,10 @@ async function createHistory(
   });
 }
 
-export async function listReimbursements(userInput?: AuthUser) {
+export async function listReimbursements(
+  userInput: AuthUser | undefined,
+  { page, limit }: PaginationQuery
+) {
   const user = requireUser(userInput);
 
   const where: Prisma.ReimbursementWhereInput =
@@ -163,11 +177,17 @@ export async function listReimbursements(userInput?: AuthUser) {
           ? { status: RequestStatus.APPROVED }
           : {};
 
-  return prisma.reimbursement.findMany({
+  const { skip, take } = getPagination(page, limit);
+  const data = await prisma.reimbursement.findMany({
+    skip,
+    take,
     where,
     include: reimbursementInclude,
     orderBy: { createdAt: "desc" },
   });
+  const total = await prisma.reimbursement.count({ where });
+
+  return paginatedResponse(data, { page, limit, total });
 }
 
 export async function createReimbursement(
@@ -177,7 +197,7 @@ export async function createReimbursement(
   const user = requireUser(userInput);
   await ensureActiveCategory(data.categoryId);
 
-  return prisma.$transaction(async (tx) => {
+  const reimbursementId = await prisma.$transaction(async (tx) => {
     const reimbursement = await tx.reimbursement.create({
       data: {
         requesterId: user.id,
@@ -187,7 +207,6 @@ export async function createReimbursement(
         expenseDate: dayjs(data.expenseDate).toDate(),
         status: RequestStatus.DRAFT,
       },
-      include: reimbursementInclude,
     });
 
     await createHistory(
@@ -198,8 +217,10 @@ export async function createReimbursement(
       "Solicitação criada pelo colaborador"
     );
 
-    return reimbursement;
+    return reimbursement.id;
   });
+
+  return findReimbursement(reimbursementId);
 }
 
 export async function getReimbursement(id: string, userInput?: AuthUser) {
@@ -230,11 +251,10 @@ export async function updateReimbursement(
     data.expenseDate = dayjs(data.expenseDate).toDate();
   }
 
-  return prisma.$transaction(async (tx) => {
-    const updated = await tx.reimbursement.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.reimbursement.update({
       where: { id },
       data,
-      include: reimbursementInclude,
     });
 
     await createHistory(
@@ -244,9 +264,9 @@ export async function updateReimbursement(
       HistoryAction.UPDATED,
       "Solicitação atualizada pelo colaborador"
     );
-
-    return updated;
   });
+
+  return findReimbursement(id);
 }
 
 export async function submitReimbursement(id: string, userInput?: AuthUser) {
@@ -296,20 +316,19 @@ export async function rejectReimbursement(
     throw new AppError("Apenas solicitações enviadas podem ser rejeitadas", 400);
   }
 
-  return prisma.$transaction(async (tx) => {
-    const updated = await tx.reimbursement.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.reimbursement.update({
       where: { id },
       data: {
         status: RequestStatus.REJECTED,
         rejectionReason,
       },
-      include: reimbursementInclude,
     });
 
     await createHistory(tx, id, user.id, HistoryAction.REJECTED, rejectionReason);
-
-    return updated;
   });
+
+  return findReimbursement(id);
 }
 
 export async function payReimbursement(id: string, userInput?: AuthUser) {
@@ -354,26 +373,33 @@ async function changeStatus(
   action: HistoryAction,
   note: string
 ) {
-  return prisma.$transaction(async (tx) => {
-    const updated = await tx.reimbursement.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.reimbursement.update({
       where: { id },
       data: { status },
-      include: reimbursementInclude,
     });
 
     await createHistory(tx, id, userId, action, note);
-
-    return updated;
   });
+
+  return findReimbursement(id);
 }
 
-export async function getHistory(id: string, userInput?: AuthUser) {
+export async function getHistory(
+  id: string,
+  userInput: AuthUser | undefined,
+  { page, limit }: PaginationQuery
+) {
   const user = requireUser(userInput);
   const reimbursement = await findReimbursement(id);
   ensureCanView(reimbursement, user);
 
-  return prisma.requestHistory.findMany({
-    where: { requestId: id },
+  const where: Prisma.RequestHistoryWhereInput = { requestId: id };
+  const { skip, take } = getPagination(page, limit);
+  const data = await prisma.requestHistory.findMany({
+    skip,
+    take,
+    where,
     include: {
       user: {
         select: {
@@ -386,6 +412,9 @@ export async function getHistory(id: string, userInput?: AuthUser) {
     },
     orderBy: { createdAt: "asc" },
   });
+  const total = await prisma.requestHistory.count({ where });
+
+  return paginatedResponse(data, { page, limit, total });
 }
 
 export async function addAttachment(
@@ -411,13 +440,24 @@ export async function addAttachment(
   });
 }
 
-export async function listAttachments(id: string, userInput?: AuthUser) {
+export async function listAttachments(
+  id: string,
+  userInput: AuthUser | undefined,
+  { page, limit }: PaginationQuery
+) {
   const user = requireUser(userInput);
   const reimbursement = await findReimbursement(id);
   ensureCanView(reimbursement, user);
 
-  return prisma.attachment.findMany({
-    where: { requestId: id },
+  const where: Prisma.AttachmentWhereInput = { requestId: id };
+  const { skip, take } = getPagination(page, limit);
+  const data = await prisma.attachment.findMany({
+    skip,
+    take,
+    where,
     orderBy: { createdAt: "desc" },
   });
+  const total = await prisma.attachment.count({ where });
+
+  return paginatedResponse(data, { page, limit, total });
 }

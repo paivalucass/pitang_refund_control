@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "../../generated/prisma/index";
 import { AppError } from "../../lib/AppError.ts";
+import { getPagination, paginatedResponse, type PaginationQuery } from "../../lib/pagination.ts";
 import { prisma } from "../../lib/prisma.ts";
 
 type CreateUserInput = {
@@ -41,9 +42,15 @@ export async function createUser(data: CreateUserInput) {
   }
 }
 
-export async function listUsers() {
-  return prisma.user.findMany({
+export async function listUsers({ page, limit }: PaginationQuery) {
+  const { skip, take } = getPagination(page, limit);
+  const data = await prisma.user.findMany({
+    skip,
+    take,
     orderBy: { createdAt: "desc" },
     select: userSelect,
   });
+  const total = await prisma.user.count();
+
+  return paginatedResponse(data, { page, limit, total });
 }

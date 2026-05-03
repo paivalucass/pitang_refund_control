@@ -9,6 +9,10 @@ type RequestSchema = z.ZodObject<{
   query?: z.ZodType;
 }>;
 
+type RequestWithValidatedQuery = Request & {
+  validatedQuery?: unknown;
+};
+
 export function validate(schema: RequestSchema) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     const parsed = schema.parse({
@@ -19,7 +23,10 @@ export function validate(schema: RequestSchema) {
 
     if (parsed.body) req.body = parsed.body;
     if (parsed.params) req.params = parsed.params as ParamsDictionary;
-    if (parsed.query) req.query = parsed.query as ParsedQs;
+    if (parsed.query) {
+      (req as RequestWithValidatedQuery).validatedQuery = parsed.query;
+      Object.assign(req.query, parsed.query as ParsedQs);
+    }
 
     next();
   };

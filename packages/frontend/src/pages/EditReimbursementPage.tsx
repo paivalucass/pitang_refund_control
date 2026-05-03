@@ -27,9 +27,9 @@ export function EditReimbursementPage() {
   React.useEffect(() => {
     async function load() {
       try {
-        const [request, categoryList] = await Promise.all([getReimbursement(id), listCategories()])
+        const [request, categoryList] = await Promise.all([getReimbursement(id), listCategories(1, 100)])
         setReimbursement(request)
-        setCategories(categoryList)
+        setCategories(categoryList.data)
       } catch (err) {
         setError((err as ApiError).message || 'Não foi possível carregar a solicitação.')
       } finally {

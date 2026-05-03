@@ -18,22 +18,25 @@ jest.mock('@/services/reimbursements.service', () => ({
 }))
 
 test('renderiza lista de reembolsos', async () => {
-  ;(listReimbursements as jest.Mock).mockResolvedValueOnce([
-    {
-      id: 'req-1',
-      requesterId: 'user-1',
-      categoryId: 'cat-1',
-      description: 'Taxi',
-      amount: 52.5,
-      expenseDate: '2026-05-01T00:00:00.000Z',
-      status: 'DRAFT',
-      createdAt: '2026-05-01T00:00:00.000Z',
-      updatedAt: '2026-05-01T00:00:00.000Z',
-      requester: { id: 'user-1', name: 'Ana', email: 'ana@pitang.com', role: 'EMPLOYEE' },
-      category: { id: 'cat-1', name: 'Transporte', active: true, createdAt: '', updatedAt: '' },
-      attachments: [],
-    },
-  ])
+  ;(listReimbursements as jest.Mock).mockResolvedValueOnce({
+    data: [
+      {
+        id: 'req-1',
+        requesterId: 'user-1',
+        categoryId: 'cat-1',
+        description: 'Taxi',
+        amount: 52.5,
+        expenseDate: '2026-05-01T00:00:00.000Z',
+        status: 'DRAFT',
+        createdAt: '2026-05-01T00:00:00.000Z',
+        updatedAt: '2026-05-01T00:00:00.000Z',
+        requester: { id: 'user-1', name: 'Ana', email: 'ana@pitang.com', role: 'EMPLOYEE' },
+        category: { id: 'cat-1', name: 'Transporte', active: true, createdAt: '', updatedAt: '' },
+        attachments: [],
+      },
+    ],
+    meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
+  })
 
   render(
     <MemoryRouter>
@@ -46,7 +49,10 @@ test('renderiza lista de reembolsos', async () => {
 })
 
 test('renderiza estado vazio', async () => {
-  ;(listReimbursements as jest.Mock).mockResolvedValueOnce([])
+  ;(listReimbursements as jest.Mock).mockResolvedValueOnce({
+    data: [],
+    meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
+  })
 
   render(
     <MemoryRouter>

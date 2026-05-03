@@ -58,8 +58,9 @@ describe("users routes", () => {
     const response = await request(app).get("/users").set(auth(token));
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveLength(1);
-    expect(response.body[0].passwordHash).toBeUndefined();
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0].passwordHash).toBeUndefined();
+    expect(response.body.meta).toMatchObject({ page: 1, limit: 10, total: 1, totalPages: 1 });
   });
 
   it("forbids non-admin users from listing users", async () => {

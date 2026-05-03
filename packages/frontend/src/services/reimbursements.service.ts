@@ -1,5 +1,5 @@
 import { apiFetch } from '@/services/api'
-import type { Attachment, AttachmentType, Reimbursement, RequestHistory } from '@/types'
+import type { Attachment, AttachmentType, PaginatedResponse, Reimbursement, RequestHistory } from '@/types'
 
 export type ReimbursementFormData = {
   categoryId: string
@@ -8,12 +8,12 @@ export type ReimbursementFormData = {
   expenseDate: string
 }
 
-export function listReimbursements() {
-  return apiFetch<Reimbursement[]>('/reimbursements')
+export function listReimbursements(page = 1, limit = 10) {
+  return apiFetch<PaginatedResponse<Reimbursement>>(`/reimbursements?page=${page}&limit=${limit}`)
 }
 
-export function listPastReimbursements() {
-  return apiFetch<Reimbursement[]>('/reimbursements/history')
+export function listPastReimbursements(page = 1, limit = 10) {
+  return apiFetch<PaginatedResponse<Reimbursement>>(`/reimbursements/history?page=${page}&limit=${limit}`)
 }
 
 export function getReimbursement(id: string) {
@@ -57,8 +57,8 @@ export function cancelReimbursement(id: string) {
   return apiFetch<Reimbursement>(`/reimbursements/${id}/cancel`, { method: 'POST' })
 }
 
-export function getHistory(id: string) {
-  return apiFetch<RequestHistory[]>(`/reimbursements/${id}/history`)
+export function getHistory(id: string, page = 1, limit = 10) {
+  return apiFetch<PaginatedResponse<RequestHistory>>(`/reimbursements/${id}/history?page=${page}&limit=${limit}`)
 }
 
 export function addAttachment(
@@ -71,6 +71,6 @@ export function addAttachment(
   })
 }
 
-export function listAttachments(id: string) {
-  return apiFetch<Attachment[]>(`/reimbursements/${id}/attachments`)
+export function listAttachments(id: string, page = 1, limit = 10) {
+  return apiFetch<PaginatedResponse<Attachment>>(`/reimbursements/${id}/attachments?page=${page}&limit=${limit}`)
 }
