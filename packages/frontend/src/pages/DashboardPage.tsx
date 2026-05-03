@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router'
 import { PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { toast } from '@/components/ui/sonner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Textarea } from '@/components/ui/textarea'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
@@ -22,6 +24,7 @@ import {
   cancelReimbursement,
   listReimbursements,
   payReimbursement,
+  rejectReimbursement,
   submitReimbursement,
   type ReimbursementListFilters,
 } from '@/services/reimbursements.service'
@@ -41,6 +44,7 @@ const requestStatuses: Array<{ value: RequestStatus; label: string }> = [
 export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const showRequester = user?.role === 'MANAGER' || user?.role === 'FINANCE' || user?.role === 'ADMIN'
   const [items, setItems] = React.useState<Reimbursement[]>([])
   const [page, setPage] = React.useState(1)
   const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
@@ -49,6 +53,8 @@ export function DashboardPage() {
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
   const [confirm, setConfirm] = React.useState<{ title: string; description: string; action: () => Promise<void> } | null>(null)
+  const [rejectTarget, setRejectTarget] = React.useState<Reimbursement | null>(null)
+  const [rejectionReason, setRejectionReason] = React.useState('')
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -91,6 +97,17 @@ export function DashboardPage() {
 
   function clearFilters() {
     updateFilters({ sortBy: 'createdAt', sortOrder: 'desc' })
+  }
+
+  async function handleReject(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!rejectTarget || !rejectionReason.trim()) return
+
+    await rejectReimbursement(rejectTarget.id, rejectionReason)
+    toast.success('Solicitação rejeitada com sucesso.')
+    setRejectTarget(null)
+    setRejectionReason('')
+    await load()
   }
 
   function buildActions(request: Reimbursement) {
@@ -137,11 +154,27 @@ export function DashboardPage() {
       )
     }
     if (user.role === 'MANAGER' && request.status === 'SUBMITTED') {
-      return actionButton('Aprovar', async () => {
-        await approveReimbursement(request.id)
-        toast.success('Solicitação aprovada com sucesso.')
-        await load()
-      })
+      return (
+        <>
+          {actionButton('Aprovar', async () => {
+            await approveReimbursement(request.id)
+            toast.success('Solicitação aprovada com sucesso.')
+            await load()
+          })}
+          <Button
+            type="button"
+            size="sm"
+            variant="destructive"
+            onClick={(event) => {
+              event.stopPropagation()
+              setRejectTarget(request)
+              setRejectionReason('')
+            }}
+          >
+            Rejeitar
+          </Button>
+        </>
+      )
     }
     if (user.role === 'FINANCE' && request.status === 'APPROVED') {
       return actionButton('Marcar pago', async () => {
@@ -172,128 +205,126 @@ export function DashboardPage() {
           ) : null}
         </div>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <div className="space-y-2 lg:col-span-2">
-              <Label htmlFor="requestSearch">Busca</Label>
-              <Input
-                id="requestSearch"
-                placeholder="Descrição ou colaborador"
-                value={filters.search ?? ''}
-                onChange={(event) => updateFilters({ ...filters, search: event.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="requestCategory">Categoria</Label>
-              <Select
-                id="requestCategory"
-                value={filters.categoryId ?? ''}
-                onChange={(event) => updateFilters({ ...filters, categoryId: event.target.value })}
-              >
-                <option value="">Todas</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>{category.name}</option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="requestStatus">Status</Label>
-              <Select
-                id="requestStatus"
-                value={filters.status ?? ''}
-                onChange={(event) => updateFilters({ ...filters, status: event.target.value as RequestStatus | '' })}
-              >
-                <option value="">Todos</option>
-                {requestStatuses.map((status) => (
-                  <option key={status.value} value={status.value}>{status.label}</option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="requestSort">Ordenação</Label>
-              <Select
-                id="requestSort"
-                value={`${filters.sortBy ?? 'createdAt'}:${filters.sortOrder ?? 'desc'}`}
-                onChange={(event) => {
-                  const [sortBy, sortOrder] = event.target.value.split(':') as [ReimbursementListFilters['sortBy'], ReimbursementListFilters['sortOrder']]
-                  updateFilters({ ...filters, sortBy, sortOrder })
-                }}
-              >
-                <option value="createdAt:desc">Mais recentes</option>
-                <option value="createdAt:asc">Mais antigas</option>
-                <option value="expenseDate:desc">Despesa mais recente</option>
-                <option value="expenseDate:asc">Despesa mais antiga</option>
-                <option value="amount:desc">Maior valor</option>
-                <option value="amount:asc">Menor valor</option>
-              </Select>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button type="button" variant="outline" onClick={clearFilters}>Limpar filtros</Button>
-          </div>
-        </CardContent>
-      </Card>
       {loading ? <LoadingTable /> : null}
       {error ? <ErrorState message={error} onRetry={() => void load()} /> : null}
-      {!loading && !error && items.length === 0 ? (
-        <EmptyState
-          title="Nenhuma solicitação encontrada"
-          description="Quando houver solicitações para o seu perfil, elas aparecerão aqui."
-          action={
-            user?.role === 'EMPLOYEE' ? (
-              <Button type="button" onClick={() => navigate('/reimbursements/new')}>
-                Criar solicitação
-              </Button>
-            ) : null
-          }
-        />
-      ) : null}
-      {items.length > 0 ? (
+      {!loading && !error ? (
         <Card>
           <CardHeader>
             <CardTitle>Solicitações</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((request) => (
-                  <TableRow className="cursor-pointer" key={request.id} onClick={() => navigate(`/reimbursements/${request.id}`)}>
-                    <TableCell className="font-medium">{request.description}</TableCell>
-                    <TableCell>{request.category.name}</TableCell>
-                    <TableCell>{formatCurrency(request.amount)}</TableCell>
-                    <TableCell>{formatDate(request.expenseDate)}</TableCell>
-                    <TableCell><StatusBadge status={request.status} /></TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        {buildActions(request)}
-                        <Link
-                          className="inline-flex h-9 items-center rounded-md px-3 text-sm font-medium underline-offset-4 hover:underline"
-                          to={`/reimbursements/${request.id}`}
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          Detalhe
-                        </Link>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <PaginationControl currentPage={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+            <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+              <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="requestSearch">Busca</Label>
+                <Input
+                  id="requestSearch"
+                  placeholder="Descrição ou colaborador"
+                  value={filters.search ?? ''}
+                  onChange={(event) => updateFilters({ ...filters, search: event.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="requestCategory">Categoria</Label>
+                <Select
+                  id="requestCategory"
+                  value={filters.categoryId ?? ''}
+                  onChange={(event) => updateFilters({ ...filters, categoryId: event.target.value })}
+                >
+                  <option value="">Todas</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="requestStatus">Status</Label>
+                <Select
+                  id="requestStatus"
+                  value={filters.status ?? ''}
+                  onChange={(event) => updateFilters({ ...filters, status: event.target.value as RequestStatus | '' })}
+                >
+                  <option value="">Todos</option>
+                  {requestStatuses.map((status) => (
+                    <option key={status.value} value={status.value}>{status.label}</option>
+                  ))}
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="requestSort">Ordenação</Label>
+                <Select
+                  id="requestSort"
+                  value={`${filters.sortBy ?? 'createdAt'}:${filters.sortOrder ?? 'desc'}`}
+                  onChange={(event) => {
+                    const [sortBy, sortOrder] = event.target.value.split(':') as [ReimbursementListFilters['sortBy'], ReimbursementListFilters['sortOrder']]
+                    updateFilters({ ...filters, sortBy, sortOrder })
+                  }}
+                >
+                  <option value="createdAt:desc">Mais recentes</option>
+                  <option value="createdAt:asc">Mais antigas</option>
+                  <option value="expenseDate:desc">Despesa mais recente</option>
+                  <option value="expenseDate:asc">Despesa mais antiga</option>
+                  <option value="amount:desc">Maior valor</option>
+                  <option value="amount:asc">Menor valor</option>
+                </Select>
+              </div>
+            </div>
+            <div className="mb-4 flex justify-end">
+              <Button type="button" variant="outline" onClick={clearFilters}>Limpar filtros</Button>
+            </div>
+            {items.length === 0 ? (
+              <EmptyState
+                title="Nenhuma solicitação encontrada"
+                description="Quando houver solicitações para o seu perfil, elas aparecerão aqui."
+                action={
+                  user?.role === 'EMPLOYEE' ? (
+                    <Button type="button" onClick={() => navigate('/reimbursements/new')}>
+                      Criar solicitação
+                    </Button>
+                  ) : null
+                }
+              />
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Descrição</TableHead>
+                      {showRequester ? <TableHead>Solicitante</TableHead> : null}
+                      <TableHead>Categoria</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((request) => (
+                      <TableRow className="cursor-pointer" key={request.id} onClick={() => navigate(`/reimbursements/${request.id}`)}>
+                        <TableCell className="font-medium">{request.description}</TableCell>
+                        {showRequester ? <TableCell>{request.requester.name}</TableCell> : null}
+                        <TableCell>{request.category.name}</TableCell>
+                        <TableCell>{formatCurrency(request.amount)}</TableCell>
+                        <TableCell>{formatDate(request.expenseDate)}</TableCell>
+                        <TableCell><StatusBadge status={request.status} /></TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-2">
+                            {buildActions(request)}
+                            <Link
+                              className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium hover:bg-slate-100"
+                              to={`/reimbursements/${request.id}`}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              Detalhe
+                            </Link>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <PaginationControl currentPage={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+              </>
+            )}
           </CardContent>
         </Card>
       ) : null}
@@ -308,6 +339,30 @@ export function DashboardPage() {
           await confirm?.action()
         }}
       />
+      <Dialog
+        open={Boolean(rejectTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRejectTarget(null)
+            setRejectionReason('')
+          }
+        }}
+        title="Rejeitar solicitação"
+      >
+        <form onSubmit={handleReject}>
+          <Label htmlFor="dashboardRejectionReason">Justificativa</Label>
+          <Textarea
+            id="dashboardRejectionReason"
+            className="mt-2"
+            value={rejectionReason}
+            onChange={(event) => setRejectionReason(event.target.value)}
+          />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setRejectTarget(null)}>Voltar</Button>
+            <Button type="submit" variant="destructive">Rejeitar</Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
     </div>
   )
 }

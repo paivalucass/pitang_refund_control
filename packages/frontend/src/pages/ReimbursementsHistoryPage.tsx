@@ -95,122 +95,117 @@ export function ReimbursementsHistoryPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <div className="space-y-2 lg:col-span-2">
-              <Label htmlFor="historySearch">Busca</Label>
-              <Input
-                id="historySearch"
-                placeholder="Descrição ou colaborador"
-                value={filters.search ?? ''}
-                onChange={(event) => updateFilters({ ...filters, search: event.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="historyCategory">Categoria</Label>
-              <Select
-                id="historyCategory"
-                value={filters.categoryId ?? ''}
-                onChange={(event) => updateFilters({ ...filters, categoryId: event.target.value })}
-              >
-                <option value="">Todas</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>{category.name}</option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="historyStatus">Status</Label>
-              <Select
-                id="historyStatus"
-                value={filters.status ?? ''}
-                onChange={(event) => updateFilters({ ...filters, status: event.target.value as RequestStatus | '' })}
-              >
-                <option value="">Todos</option>
-                {historyStatuses.map((status) => (
-                  <option key={status.value} value={status.value}>{status.label}</option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="historySort">Ordenação</Label>
-              <Select
-                id="historySort"
-                value={`${filters.sortBy ?? 'createdAt'}:${filters.sortOrder ?? 'desc'}`}
-                onChange={(event) => {
-                  const [sortBy, sortOrder] = event.target.value.split(':') as [ReimbursementListFilters['sortBy'], ReimbursementListFilters['sortOrder']]
-                  updateFilters({ ...filters, sortBy, sortOrder })
-                }}
-              >
-                <option value="createdAt:desc">Mais recentes</option>
-                <option value="createdAt:asc">Mais antigas</option>
-                <option value="expenseDate:desc">Despesa mais recente</option>
-                <option value="expenseDate:asc">Despesa mais antiga</option>
-                <option value="amount:desc">Maior valor</option>
-                <option value="amount:asc">Menor valor</option>
-              </Select>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button type="button" variant="outline" onClick={clearFilters}>Limpar filtros</Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {loading ? <LoadingTable /> : null}
       {error ? <ErrorState message={error} onRetry={() => void load()} /> : null}
-      {!loading && !error && items.length === 0 ? (
-        <EmptyState
-          icon={Archive}
-          title="Nenhuma solicitação no histórico"
-          description={`${description} aparecerão aqui.`}
-        />
-      ) : null}
 
-      {items.length > 0 ? (
+      {!loading && !error ? (
         <Card>
           <CardHeader>
             <CardTitle>Histórico de solicitações</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Solicitante</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell className="font-medium">{request.description}</TableCell>
-                    <TableCell>{request.requester.name}</TableCell>
-                    <TableCell>{request.category.name}</TableCell>
-                    <TableCell>{formatCurrency(request.amount)}</TableCell>
-                    <TableCell>{formatDate(request.expenseDate)}</TableCell>
-                    <TableCell><StatusBadge status={request.status} /></TableCell>
-                    <TableCell>
-                      <Link
-                        className="inline-flex h-9 items-center rounded-md px-3 text-sm font-medium underline-offset-4 hover:underline"
-                        to={`/reimbursements/${request.id}`}
-                      >
-                        Detalhe
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <PaginationControl currentPage={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+            <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+              <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="historySearch">Busca</Label>
+                <Input
+                  id="historySearch"
+                  placeholder="Descrição ou colaborador"
+                  value={filters.search ?? ''}
+                  onChange={(event) => updateFilters({ ...filters, search: event.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="historyCategory">Categoria</Label>
+                <Select
+                  id="historyCategory"
+                  value={filters.categoryId ?? ''}
+                  onChange={(event) => updateFilters({ ...filters, categoryId: event.target.value })}
+                >
+                  <option value="">Todas</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="historyStatus">Status</Label>
+                <Select
+                  id="historyStatus"
+                  value={filters.status ?? ''}
+                  onChange={(event) => updateFilters({ ...filters, status: event.target.value as RequestStatus | '' })}
+                >
+                  <option value="">Todos</option>
+                  {historyStatuses.map((status) => (
+                    <option key={status.value} value={status.value}>{status.label}</option>
+                  ))}
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="historySort">Ordenação</Label>
+                <Select
+                  id="historySort"
+                  value={`${filters.sortBy ?? 'createdAt'}:${filters.sortOrder ?? 'desc'}`}
+                  onChange={(event) => {
+                    const [sortBy, sortOrder] = event.target.value.split(':') as [ReimbursementListFilters['sortBy'], ReimbursementListFilters['sortOrder']]
+                    updateFilters({ ...filters, sortBy, sortOrder })
+                  }}
+                >
+                  <option value="createdAt:desc">Mais recentes</option>
+                  <option value="createdAt:asc">Mais antigas</option>
+                  <option value="expenseDate:desc">Despesa mais recente</option>
+                  <option value="expenseDate:asc">Despesa mais antiga</option>
+                  <option value="amount:desc">Maior valor</option>
+                  <option value="amount:asc">Menor valor</option>
+                </Select>
+              </div>
+            </div>
+            <div className="mb-4 flex justify-end">
+              <Button type="button" variant="outline" onClick={clearFilters}>Limpar filtros</Button>
+            </div>
+            {items.length === 0 ? (
+              <EmptyState
+                icon={Archive}
+                title="Nenhuma solicitação no histórico"
+                description={`${description} aparecerão aqui.`}
+              />
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Solicitante</TableHead>
+                      <TableHead>Categoria</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((request) => (
+                      <TableRow key={request.id}>
+                        <TableCell className="font-medium">{request.description}</TableCell>
+                        <TableCell>{request.requester.name}</TableCell>
+                        <TableCell>{request.category.name}</TableCell>
+                        <TableCell>{formatCurrency(request.amount)}</TableCell>
+                        <TableCell>{formatDate(request.expenseDate)}</TableCell>
+                        <TableCell><StatusBadge status={request.status} /></TableCell>
+                        <TableCell>
+                          <Link
+                            className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium hover:bg-slate-100"
+                            to={`/reimbursements/${request.id}`}
+                          >
+                            Detalhe
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <PaginationControl currentPage={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+              </>
+            )}
           </CardContent>
         </Card>
       ) : null}
