@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router'
 import { login as loginRequest, register as registerRequest } from '@/services/auth.service'
-import { TOKEN_KEY, USER_KEY } from '@/services/api'
+import { REFRESH_TOKEN_KEY, TOKEN_KEY, USER_KEY } from '@/services/api'
 import type { User, UserRole } from '@/types'
 
 type AuthContextType = {
@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = React.useCallback(async (email: string, password: string) => {
     const response = await loginRequest(email, password)
     localStorage.setItem(TOKEN_KEY, response.token)
+    localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken)
     localStorage.setItem(USER_KEY, JSON.stringify(response.user))
     setToken(response.token)
     setUser(response.user)
@@ -37,11 +38,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = React.useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
     setToken(null)
     setUser(null)
     navigate('/login', { replace: true })
   }, [navigate])
+
+  React.useEffect(() => {
+    function syncRefreshedAuth() {
+      const storedUser = localStorage.getItem(USER_KEY)
+      setToken(localStorage.getItem(TOKEN_KEY))
+      setUser(storedUser ? (JSON.parse(storedUser) as User) : null)
+    }
+
+    window.addEventListener('pitang-auth-refreshed', syncRefreshedAuth)
+    window.addEventListener('storage', syncRefreshedAuth)
+
+    return () => {
+      window.removeEventListener('pitang-auth-refreshed', syncRefreshedAuth)
+      window.removeEventListener('storage', syncRefreshedAuth)
+    }
+  }, [])
 
   const value = React.useMemo(
     () => ({

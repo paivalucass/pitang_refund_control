@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import request from "supertest";
 import { app } from "../../app.ts";
 import {
+  Prisma,
   RequestStatus,
   UserRole,
   type Category,
@@ -51,7 +52,9 @@ export function auth(token: string) {
 }
 
 export async function createCategory(
-  overrides: Partial<Pick<Category, "name" | "active">> = {}
+  overrides: Partial<Pick<Category, "name" | "active">> & {
+    valueLimit?: Prisma.Decimal | number | string | null;
+  } = {}
 ): Promise<Category> {
   sequence += 1;
 
@@ -59,6 +62,7 @@ export async function createCategory(
     data: {
       name: overrides.name ?? `Category ${Date.now()} ${sequence}`,
       active: overrides.active ?? true,
+      valueLimit: overrides.valueLimit,
     },
   });
 }

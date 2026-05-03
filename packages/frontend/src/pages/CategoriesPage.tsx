@@ -12,8 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingTable } from '@/components/LoadingTable'
 import { PaginationControl } from '@/components/PaginationControl'
-import { formatDate } from '@/lib/format'
-import { createCategory, listCategories, updateCategory, type CategoryListFilters } from '@/services/categories.service'
+import { formatCurrency, formatDate } from '@/lib/format'
+import { createCategoryWithLimit, listCategories, updateCategory, type CategoryListFilters } from '@/services/categories.service'
 import type { ApiError, Category, PaginationMeta } from '@/types'
 
 const PAGE_SIZE = 10
@@ -29,6 +29,7 @@ export function CategoriesPage() {
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [editing, setEditing] = React.useState<Category | null>(null)
   const [name, setName] = React.useState('')
+  const [valueLimit, setValueLimit] = React.useState('')
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -64,23 +65,28 @@ export function CategoriesPage() {
   function openCreate() {
     setEditing(null)
     setName('')
+    setValueLimit('')
     setDialogOpen(true)
   }
 
   function openEdit(category: Category) {
     setEditing(category)
     setName(category.name)
+    setValueLimit(category.valueLimit !== null && category.valueLimit !== undefined ? String(category.valueLimit) : '')
     setDialogOpen(true)
   }
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!name.trim()) return
+    const parsedLimit = valueLimit.trim() ? Number(valueLimit) : null
+    if (parsedLimit !== null && parsedLimit <= 0) return
+
     if (editing) {
-      await updateCategory(editing.id, { name })
+      await updateCategory(editing.id, { name, valueLimit: parsedLimit })
       toast.success('Categoria atualizada com sucesso.')
     } else {
-      await createCategory(name)
+      await createCategoryWithLimit(name, parsedLimit)
       toast.success('Categoria criada com sucesso.')
     }
     setDialogOpen(false)
@@ -146,6 +152,7 @@ export function CategoriesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Limite</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Criada em</TableHead>
                   <TableHead>Ações</TableHead>
@@ -155,6 +162,9 @@ export function CategoriesPage() {
                 {categories.map((category) => (
                   <TableRow className={!category.active ? 'opacity-60' : undefined} key={category.id}>
                     <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableCell>
+                      {category.valueLimit !== null && category.valueLimit !== undefined ? formatCurrency(category.valueLimit) : 'Sem limite'}
+                    </TableCell>
                     <TableCell>
                       <Badge className={category.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}>
                         {category.active ? 'Ativa' : 'Inativa'}
@@ -179,8 +189,25 @@ export function CategoriesPage() {
       ) : null}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen} title={editing ? 'Editar categoria' : 'Nova categoria'}>
         <form onSubmit={handleSubmit}>
-          <Label htmlFor="categoryName">Nome</Label>
-          <Input id="categoryName" className="mt-2" value={name} onChange={(event) => setName(event.target.value)} />
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="categoryName">Nome</Label>
+              <Input id="categoryName" className="mt-2" value={name} onChange={(event) => setName(event.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="categoryValueLimit">Limite de valor</Label>
+              <Input
+                id="categoryValueLimit"
+                className="mt-2"
+                min="0.01"
+                placeholder="Sem limite"
+                step="0.01"
+                type="number"
+                value={valueLimit}
+                onChange={(event) => setValueLimit(event.target.value)}
+              />
+            </div>
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Voltar</Button>
             <Button type="submit">Salvar</Button>

@@ -26,10 +26,11 @@ describe("categories routes", () => {
     const response = await request(app)
       .post("/categories")
       .set(auth(token))
-      .send({ name: "Transport" });
+      .send({ name: "Transport", valueLimit: 250 });
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({ name: "Transport", active: true });
+    expect(Number(response.body.valueLimit)).toBe(250);
   });
 
   it("updates categories for admin users", async () => {
@@ -39,10 +40,11 @@ describe("categories routes", () => {
     const response = await request(app)
       .put(`/categories/${category.id}`)
       .set(auth(token))
-      .send({ name: "New name", active: false });
+      .send({ name: "New name", active: false, valueLimit: 125.5 });
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ name: "New name", active: false });
+    expect(Number(response.body.valueLimit)).toBe(125.5);
   });
 
   it("forbids category creation for non-admin users", async () => {

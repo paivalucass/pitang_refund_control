@@ -6,11 +6,13 @@ import type { ListCategoriesQuery } from "./categories.schemas.ts";
 
 type CreateCategoryInput = {
   name: string;
+  valueLimit?: number | null;
 };
 
 type UpdateCategoryInput = {
   name?: string;
   active?: boolean;
+  valueLimit?: number | null;
 };
 
 export async function listCategories({ page, limit, search, active }: ListCategoriesQuery) {

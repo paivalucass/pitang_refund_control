@@ -2,9 +2,10 @@ import type { ApiError } from '@/types'
 
 const BASE_URL = '/api'
 const TOKEN_KEY = 'pitang_refund_token'
+const REFRESH_TOKEN_KEY = 'pitang_refund_refresh_token'
 const USER_KEY = 'pitang_refund_user'
 
-export { TOKEN_KEY, USER_KEY }
+export { REFRESH_TOKEN_KEY, TOKEN_KEY, USER_KEY }
 
 function parseApiError(status: number, body: unknown): ApiError {
   if (body && typeof body === 'object' && 'message' in body) {
@@ -13,7 +14,44 @@ function parseApiError(status: number, body: unknown): ApiError {
   return { message: 'Erro inesperado ao comunicar com a API', statusCode: status }
 }
 
-export async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+function clearAuthStorage() {
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  localStorage.removeItem(USER_KEY)
+}
+
+function redirectToLogin() {
+  clearAuthStorage()
+  if (window.location.pathname !== '/login') {
+    window.location.assign('/login')
+  }
+}
+
+async function refreshAccessToken() {
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+  if (!refreshToken) return false
+
+  const response = await fetch(`${BASE_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  })
+
+  const text = await response.text()
+  const body = text ? JSON.parse(text) : null
+
+  if (!response.ok || !body?.token || !body?.refreshToken || !body?.user) {
+    return false
+  }
+
+  localStorage.setItem(TOKEN_KEY, body.token)
+  localStorage.setItem(REFRESH_TOKEN_KEY, body.refreshToken)
+  localStorage.setItem(USER_KEY, JSON.stringify(body.user))
+  window.dispatchEvent(new Event('pitang-auth-refreshed'))
+  return true
+}
+
+export async function apiFetch<T>(url: string, options: RequestInit = {}, retryOnUnauthorized = true): Promise<T> {
   const token = localStorage.getItem(TOKEN_KEY)
   const headers = new Headers(options.headers)
 
@@ -35,11 +73,10 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
 
   if (!response.ok) {
     if (response.status === 401) {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
-      if (window.location.pathname !== '/login') {
-        window.location.assign('/login')
+      if (retryOnUnauthorized && await refreshAccessToken()) {
+        return apiFetch<T>(url, options, false)
       }
+      redirectToLogin()
     }
     throw parseApiError(response.status, body)
   }

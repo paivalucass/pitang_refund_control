@@ -13,6 +13,7 @@ describe("auth routes", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.token).toEqual(expect.any(String));
+    expect(response.body.refreshToken).toEqual(expect.any(String));
     expect(response.body.user).toMatchObject({
       id: user.id,
       email: user.email,
@@ -42,6 +43,38 @@ describe("auth routes", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.details).toEqual(expect.any(Array));
+  });
+
+  it("refreshes access tokens with a valid refresh token", async () => {
+    const { user, password } = await createUser(UserRole.EMPLOYEE);
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ email: user.email, password });
+
+    const response = await request(app)
+      .post("/auth/refresh")
+      .send({ refreshToken: loginResponse.body.refreshToken });
+
+    expect(response.status).toBe(200);
+    expect(response.body.token).toEqual(expect.any(String));
+    expect(response.body.refreshToken).toEqual(expect.any(String));
+    expect(response.body.user).toMatchObject({
+      id: user.id,
+      email: user.email,
+      role: UserRole.EMPLOYEE,
+    });
+  });
+
+  it("rejects invalid refresh tokens", async () => {
+    const response = await request(app)
+      .post("/auth/refresh")
+      .send({ refreshToken: "invalid-token" });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      message: "Refresh token inválido ou expirado",
+      statusCode: 401,
+    });
   });
 
   it("protects private routes without a token", async () => {

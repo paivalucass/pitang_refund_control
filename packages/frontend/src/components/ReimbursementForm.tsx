@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { formatCurrency } from '@/lib/format'
 import { firstZodError, reimbursementSchema } from '@/lib/validation'
 import type { Category } from '@/types'
 import type { ReimbursementFormData } from '@/services/reimbursements.service'
@@ -29,6 +30,8 @@ export function ReimbursementForm({
   const [expenseDate, setExpenseDate] = React.useState(initialValues?.expenseDate ?? '')
   const [error, setError] = React.useState('')
   const activeCategories = categories.filter((category) => category.active)
+  const selectedCategory = categories.find((category) => category.id === categoryId)
+  const selectedLimit = selectedCategory?.valueLimit
 
   React.useEffect(() => {
     setCategoryId(initialValues?.categoryId ?? '')
@@ -44,6 +47,11 @@ export function ReimbursementForm({
     const result = reimbursementSchema.safeParse({ categoryId, description, amount, expenseDate })
     if (!result.success) {
       setError(firstZodError(result.error))
+      return
+    }
+
+    if (selectedLimit !== null && selectedLimit !== undefined && result.data.amount > Number(selectedLimit)) {
+      setError(`O valor máximo para ${selectedCategory?.name} é ${formatCurrency(selectedLimit)}.`)
       return
     }
 
@@ -63,6 +71,9 @@ export function ReimbursementForm({
             </option>
           ))}
         </Select>
+        {selectedLimit !== null && selectedLimit !== undefined ? (
+          <p className="text-xs text-slate-500">Limite da categoria: {formatCurrency(selectedLimit)}</p>
+        ) : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="description">Descrição</Label>
@@ -71,7 +82,15 @@ export function ReimbursementForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="amount">Valor</Label>
-          <Input id="amount" min="0.01" step="0.01" type="number" value={amount} onChange={(event) => setAmount(event.target.value)} />
+          <Input
+            id="amount"
+            max={selectedLimit !== null && selectedLimit !== undefined ? Number(selectedLimit) : undefined}
+            min="0.01"
+            step="0.01"
+            type="number"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="expenseDate">Data da despesa</Label>

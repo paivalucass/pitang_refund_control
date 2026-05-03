@@ -23,6 +23,7 @@ function Harness() {
 test('login salva usuario e logout limpa estado', async () => {
   ;(login as jest.Mock).mockResolvedValueOnce({
     token: 'token-1',
+    refreshToken: 'refresh-token-1',
     user: {
       id: 'user-1',
       name: 'Ana',

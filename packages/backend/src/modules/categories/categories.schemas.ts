@@ -10,6 +10,7 @@ export const categoryParamsSchema = z.object({
 export const createCategorySchema = z.object({
   body: z.object({
     name: z.string().trim().min(1, "Nome é obrigatório"),
+    valueLimit: z.coerce.number().positive("Limite deve ser maior que zero").optional().nullable(),
   }),
 });
 
@@ -19,8 +20,9 @@ export const updateCategorySchema = z.object({
     .object({
       name: z.string().trim().min(1, "Nome é obrigatório").optional(),
       active: z.boolean().optional(),
+      valueLimit: z.coerce.number().positive("Limite deve ser maior que zero").optional().nullable(),
     })
-    .refine((data) => data.name !== undefined || data.active !== undefined, {
+    .refine((data) => data.name !== undefined || data.active !== undefined || data.valueLimit !== undefined, {
       message: "Informe ao menos um campo para atualização",
     }),
 });

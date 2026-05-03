@@ -32,6 +32,7 @@ export type Category = {
   id: string
   name: string
   active: boolean
+  valueLimit?: number | string | null
   createdAt: string
   updatedAt: string
 }
@@ -80,6 +81,7 @@ export type ApiError = {
 
 export type LoginResponse = {
   token: string
+  refreshToken: string
   user: User
 }
 

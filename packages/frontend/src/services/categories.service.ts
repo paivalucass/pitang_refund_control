@@ -20,7 +20,14 @@ export function createCategory(name: string) {
   })
 }
 
-export function updateCategory(id: string, data: Partial<Pick<Category, 'name' | 'active'>>) {
+export function createCategoryWithLimit(name: string, valueLimit: number | null) {
+  return apiFetch<Category>('/categories', {
+    method: 'POST',
+    body: JSON.stringify({ name, valueLimit }),
+  })
+}
+
+export function updateCategory(id: string, data: Partial<Pick<Category, 'name' | 'active' | 'valueLimit'>>) {
   return apiFetch<Category>(`/categories/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),

@@ -50,6 +50,24 @@ describe("reimbursements routes", () => {
     expect(response.body.message).toBe("Categoria não encontrada ou inativa");
   });
 
+  it("rejects reimbursement creation above the category limit", async () => {
+    const employee = await createUserAndToken(UserRole.EMPLOYEE);
+    const category = await createCategory({ valueLimit: 100 });
+
+    const response = await request(app)
+      .post("/reimbursements")
+      .set(auth(employee.token))
+      .send({
+        categoryId: category.id,
+        description: "Hotel",
+        amount: 150,
+        expenseDate: "2026-04-20T12:00:00.000Z",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain("Valor excede o limite da categoria");
+  });
+
   it("updates only draft reimbursements owned by the employee", async () => {
     const employee = await createUserAndToken(UserRole.EMPLOYEE);
     const category = await createCategory();

@@ -70,6 +70,19 @@ async function ensureActiveCategory(categoryId: string) {
   return category;
 }
 
+async function ensureCategoryAllowsAmount(categoryId: string, amount: number) {
+  const category = await ensureActiveCategory(categoryId);
+
+  if (category.valueLimit !== null && amount > Number(category.valueLimit)) {
+    throw new AppError(
+      `Valor excede o limite da categoria ${category.name}: ${Number(category.valueLimit).toFixed(2)}`,
+      400
+    );
+  }
+
+  return category;
+}
+
 async function findReimbursement(id: string) {
   const reimbursement = await prisma.reimbursement.findUnique({
     where: { id },
@@ -238,7 +251,7 @@ export async function createReimbursement(
   userInput?: AuthUser
 ) {
   const user = requireUser(userInput);
-  await ensureActiveCategory(data.categoryId);
+  await ensureCategoryAllowsAmount(data.categoryId, data.amount);
 
   const reimbursementId = await prisma.$transaction(async (tx) => {
     const reimbursement = await tx.reimbursement.create({
@@ -286,13 +299,14 @@ export async function updateReimbursement(
     throw new AppError("Apenas solicitações em rascunho podem ser editadas", 400);
   }
 
-  if (data.categoryId) {
-    await ensureActiveCategory(data.categoryId);
-  }
-
   if (data.expenseDate) {
     data.expenseDate = dayjs(data.expenseDate).toDate();
   }
+
+  await ensureCategoryAllowsAmount(
+    data.categoryId ?? reimbursement.categoryId,
+    data.amount ?? Number(reimbursement.amount)
+  );
 
   await prisma.$transaction(async (tx) => {
     await tx.reimbursement.update({
