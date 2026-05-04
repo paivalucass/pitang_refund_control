@@ -11,6 +11,50 @@ services:
       POSTGRES_DB: pitang_refund
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pitang_refund"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: oven/bun:alpine
+    container_name: pitang_refund_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /app
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/pitang_refund?schema=public
+      JWT_SECRET: eu-amo-a-pitang-hehe
+      JWT_EXPIRES_IN: 1d
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./packages/backend:/app
+      - backend_uploads:/app/uploads
+    command: >
+      sh -c "bun install &&
+             bunx prisma generate &&
+             bunx prisma migrate dev &&
+             bun run db:seed &&
+             bun run dev"
+
+  frontend:
+    image: oven/bun:alpine
+    container_name: pitang_refund_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./packages/frontend:/app
+    command: sh -c "bun install && bun run dev --host 0.0.0.0"
 
 volumes:
   pgdata:
+  backend_uploads:

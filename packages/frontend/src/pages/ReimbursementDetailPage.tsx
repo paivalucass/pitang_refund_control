@@ -31,6 +31,9 @@ import type { ApiError, Attachment, PaginationMeta, Reimbursement, RequestHistor
 
 const PAGE_SIZE = 10
 const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024
+const ACCEPTED_ATTACHMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
+const ATTACHMENT_ERROR_MESSAGE = 'Anexe apenas arquivos PDF, JPG ou PNG com até 5MB.'
 
 export function ReimbursementDetailPage() {
   const { id = '' } = useParams()
@@ -50,6 +53,7 @@ export function ReimbursementDetailPage() {
   const [rejectionReason, setRejectionReason] = React.useState('')
   const [attachmentOpen, setAttachmentOpen] = React.useState(false)
   const [attachmentFile, setAttachmentFile] = React.useState<File | null>(null)
+  const [attachmentError, setAttachmentError] = React.useState('')
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -106,13 +110,45 @@ export function ReimbursementDetailPage() {
 
   async function handleAttachment(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!attachmentFile) return
-    await addAttachment(id, attachmentFile)
-    toast.success('Anexo adicionado com sucesso.')
-    setAttachmentFile(null)
-    setAttachmentOpen(false)
-    setAttachmentsPage(1)
-    await load()
+    setAttachmentError('')
+    if (!attachmentFile) {
+      setAttachmentError('Selecione um arquivo para anexar.')
+      return
+    }
+    if (!isValidAttachment(attachmentFile)) {
+      setAttachmentError(ATTACHMENT_ERROR_MESSAGE)
+      return
+    }
+
+    try {
+      await addAttachment(id, attachmentFile)
+      toast.success('Anexo adicionado com sucesso.')
+      setAttachmentFile(null)
+      setAttachmentOpen(false)
+      setAttachmentsPage(1)
+      await load()
+    } catch (err) {
+      setAttachmentError((err as ApiError).message || 'Não foi possível adicionar o anexo.')
+    }
+  }
+
+  function handleAttachmentFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null
+    if (!file) {
+      setAttachmentFile(null)
+      setAttachmentError('')
+      return
+    }
+
+    if (!isValidAttachment(file)) {
+      setAttachmentFile(null)
+      setAttachmentError(ATTACHMENT_ERROR_MESSAGE)
+      event.target.value = ''
+      return
+    }
+
+    setAttachmentFile(file)
+    setAttachmentError('')
   }
 
   function confirmAction(title: string, action: () => Promise<void>) {
@@ -264,18 +300,22 @@ export function ReimbursementDetailPage() {
         open={attachmentOpen}
         onOpenChange={(open) => {
           setAttachmentOpen(open)
-          if (!open) setAttachmentFile(null)
+          if (!open) {
+            setAttachmentFile(null)
+            setAttachmentError('')
+          }
         }}
         title="Adicionar anexo"
       >
         <form className="space-y-4" onSubmit={handleAttachment}>
+          {attachmentError ? <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{attachmentError}</p> : null}
           <div className="space-y-2">
             <Label htmlFor="attachmentFile">Arquivo</Label>
             <Input
               id="attachmentFile"
               accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
               type="file"
-              onChange={(event) => setAttachmentFile(event.target.files?.[0] ?? null)}
+              onChange={handleAttachmentFileChange}
             />
             <p className="text-xs text-slate-500">Formatos aceitos: PDF, JPG ou PNG até 5MB.</p>
           </div>
@@ -283,6 +323,7 @@ export function ReimbursementDetailPage() {
             <Button type="button" variant="outline" onClick={() => {
               setAttachmentOpen(false)
               setAttachmentFile(null)
+              setAttachmentError('')
             }}>Voltar</Button>
             <Button type="submit" disabled={!attachmentFile}>Adicionar</Button>
           </DialogFooter>
@@ -290,6 +331,10 @@ export function ReimbursementDetailPage() {
       </Dialog>
     </div>
   )
+}
+
+function isValidAttachment(file: File) {
+  return ACCEPTED_ATTACHMENT_TYPES.includes(file.type) && file.size <= MAX_ATTACHMENT_SIZE
 }
 
 function Info({ label, value }: { label: string; value: React.ReactNode }) {

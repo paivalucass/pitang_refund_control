@@ -116,7 +116,7 @@ export async function addAttachment(req: Request, res: Response): Promise<void> 
     throw new AppError("Tipo de arquivo inválido. Use PDF, JPG ou PNG.", 400);
   }
 
-  const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+  const fileUrl = `/api/uploads/${req.file.filename}`;
   const attachment = await reimbursementsService.addAttachment(
     getId(req),
     {
