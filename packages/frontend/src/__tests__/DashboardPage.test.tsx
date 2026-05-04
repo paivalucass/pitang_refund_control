@@ -3,11 +3,18 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { listReimbursements } from '@/services/reimbursements.service'
+import type { UserRole } from '@/types'
+
+let mockUserRole: UserRole = 'EMPLOYEE'
 
 jest.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 'user-1', name: 'Ana', email: 'ana@pitang.com', role: 'EMPLOYEE' },
+    user: { id: 'user-1', name: 'Ana', email: 'ana@pitang.com', role: mockUserRole },
   }),
+}))
+
+jest.mock('@/services/categories.service', () => ({
+  listCategories: jest.fn().mockResolvedValue({ data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } }),
 }))
 
 jest.mock('@/services/reimbursements.service', () => ({
@@ -17,6 +24,10 @@ jest.mock('@/services/reimbursements.service', () => ({
   approveReimbursement: jest.fn(),
   payReimbursement: jest.fn(),
 }))
+
+beforeEach(() => {
+  mockUserRole = 'EMPLOYEE'
+})
 
 test('renderiza lista de reembolsos', async () => {
   ;(listReimbursements as jest.Mock).mockResolvedValueOnce({
@@ -47,6 +58,29 @@ test('renderiza lista de reembolsos', async () => {
 
   await waitFor(() => expect(screen.getByText('Taxi')).toBeInTheDocument())
   expect(screen.getByText('Editar')).toBeInTheDocument()
+})
+
+test.each([
+  ['EMPLOYEE', 'Dashboard do Colaborador', 'Crie, acompanhe e envie suas solicitações de reembolso.'],
+  ['MANAGER', 'Dashboard do Gestor', 'Analise as solicitações enviadas pela sua equipe'],
+  ['FINANCE', 'Dashboard do Financeiro', 'registre os pagamentos de reembolso'],
+  ['ADMIN', 'Dashboard do Admin', 'acompanhe o fluxo operacional do sistema'],
+] as Array<[UserRole, string, string]>)('renderiza titulo e descricao do perfil %s', async (role, title, description) => {
+  mockUserRole = role
+  ;(listReimbursements as jest.Mock).mockResolvedValueOnce({
+    data: [],
+    meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
+  })
+
+  render(
+    <MemoryRouter>
+      <DashboardPage />
+    </MemoryRouter>,
+  )
+
+  expect(screen.getByRole('heading', { name: title })).toBeInTheDocument()
+  expect(screen.getByText(new RegExp(description, 'i'))).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByText(/nenhuma solicitação encontrada/i)).toBeInTheDocument())
 })
 
 test('renderiza estado vazio', async () => {

@@ -28,7 +28,7 @@ import {
   submitReimbursement,
   type ReimbursementListFilters,
 } from '@/services/reimbursements.service'
-import type { ApiError, Category, PaginationMeta, Reimbursement, RequestStatus } from '@/types'
+import type { ApiError, Category, PaginationMeta, Reimbursement, RequestStatus, UserRole } from '@/types'
 
 const PAGE_SIZE = 10
 const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
@@ -41,9 +41,32 @@ const requestStatuses: Array<{ value: RequestStatus; label: string }> = [
   { value: 'CANCELED', label: 'Cancelada' },
 ]
 
+const dashboardCopy: Record<UserRole, { title: string; description: string }> = {
+  EMPLOYEE: {
+    title: 'Dashboard do Colaborador',
+    description: 'Crie, acompanhe e envie suas solicitações de reembolso.',
+  },
+  MANAGER: {
+    title: 'Dashboard do Gestor',
+    description: 'Analise as solicitações enviadas pela sua equipe e registre aprovações ou rejeições.',
+  },
+  FINANCE: {
+    title: 'Dashboard do Financeiro',
+    description: 'Acompanhe solicitações aprovadas e registre os pagamentos de reembolso.',
+  },
+  ADMIN: {
+    title: 'Dashboard do Admin',
+    description: 'Monitore as solicitações de reembolso e acompanhe o fluxo operacional do sistema.',
+  },
+}
+
 export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const copy = user ? dashboardCopy[user.role] : {
+    title: 'Dashboard',
+    description: 'Acompanhe as solicitações disponíveis para o seu perfil.',
+  }
   const showRequester = user?.role === 'MANAGER' || user?.role === 'FINANCE' || user?.role === 'ADMIN'
   const [items, setItems] = React.useState<Reimbursement[]>([])
   const [page, setPage] = React.useState(1)
@@ -196,8 +219,8 @@ export function DashboardPage() {
         <img className="relative mb-6 h-14 w-auto invert brightness-0" src="/pitang_pitang.png" alt="Pitang" />
         <div className="relative flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <h1 className="text-2xl font-semibold">Dashboard</h1>
-            <p className="text-sm text-white/80">Acompanhe as solicitações disponíveis para o seu perfil.</p>
+            <h1 className="text-2xl font-semibold">{copy.title}</h1>
+            <p className="text-sm text-white/80">{copy.description}</p>
           </div>
           {user?.role === 'EMPLOYEE' ? (
             <Button className="bg-white text-red-700 hover:bg-white/90" type="button" onClick={() => navigate('/reimbursements/new')}>
