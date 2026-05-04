@@ -48,7 +48,7 @@ const users: Record<SeedUserKey, { name: string; email: string; role: UserRole }
   manager: { name: "Gestor Pitang", email: "gestor@pitang.com", role: UserRole.MANAGER },
   joao: { name: "João Silva", email: "joao@pitang.com", role: UserRole.EMPLOYEE },
   maria: { name: "Maria Souza", email: "maria@pitang.com", role: UserRole.EMPLOYEE },
-  carlos: { name: "Carlos Lima", email: "carlos@pitang.com", role: UserRole.EMPLOYEE },
+  carlos: { name: "Carlos Victor Gomes", email: "carlosvictorgomes@pitang.com", role: UserRole.EMPLOYEE },
 };
 
 const categories: Record<SeedCategoryKey, { name: string; active: boolean; valueLimit: string | null }> = {
