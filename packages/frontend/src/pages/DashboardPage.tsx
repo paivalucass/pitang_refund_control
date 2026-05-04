@@ -139,6 +139,7 @@ export function DashboardPage() {
     if (!user) return null
     const actionButton = (label: string, action: () => Promise<void>) => (
       <Button
+        className="h-7 shrink-0 px-2 text-xs"
         type="button"
         size="sm"
         variant="outline"
@@ -155,6 +156,7 @@ export function DashboardPage() {
       return (
         <>
           <Button
+            className="h-7 shrink-0 px-2 text-xs"
             type="button"
             size="sm"
             variant="outline"
@@ -187,6 +189,7 @@ export function DashboardPage() {
             await load()
           })}
           <Button
+            className="h-7 shrink-0 px-2 text-xs"
             type="button"
             size="sm"
             variant="destructive"
@@ -310,32 +313,34 @@ export function DashboardPage() {
               />
             ) : (
               <>
-                <Table>
+                <Table className="table-fixed">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Descrição</TableHead>
-                      {showRequester ? <TableHead>Solicitante</TableHead> : null}
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
+                      <TableHead className="w-[30%]">Descrição</TableHead>
+                      {showRequester ? <TableHead className="w-[16%]">Solicitante</TableHead> : null}
+                      <TableHead className="w-[14%]">Categoria</TableHead>
+                      <TableHead className="w-[10%]">Valor</TableHead>
+                      <TableHead className="w-[11%]">Data</TableHead>
+                      <TableHead className="w-[11%]">Status</TableHead>
+                      <TableHead className="w-64">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {items.map((request) => (
                       <TableRow className="cursor-pointer" key={request.id} onClick={() => navigate(`/reimbursements/${request.id}`)}>
-                        <TableCell className="font-medium">{request.description}</TableCell>
+                        <TableCell className="font-medium">
+                          <span className="block truncate" title={request.description}>{request.description}</span>
+                        </TableCell>
                         {showRequester ? <TableCell>{request.requester.name}</TableCell> : null}
                         <TableCell>{request.category.name}</TableCell>
                         <TableCell>{formatCurrency(request.amount)}</TableCell>
                         <TableCell>{formatDate(request.expenseDate)}</TableCell>
                         <TableCell><StatusBadge status={request.status} /></TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-nowrap gap-1.5">
                             {buildActions(request)}
                             <Link
-                              className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium hover:bg-slate-100"
+                              className="inline-flex h-7 shrink-0 items-center rounded-md border border-slate-200 bg-white px-2 text-xs font-medium hover:bg-slate-100"
                               to={`/reimbursements/${request.id}`}
                               onClick={(event) => event.stopPropagation()}
                             >

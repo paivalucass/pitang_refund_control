@@ -172,22 +172,24 @@ export function ReimbursementsHistoryPage() {
               />
             ) : (
               <>
-                <Table>
+                <Table className="table-fixed">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Solicitante</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
+                      <TableHead className="w-[32%]">Descrição</TableHead>
+                      <TableHead className="w-[17%]">Solicitante</TableHead>
+                      <TableHead className="w-[15%]">Categoria</TableHead>
+                      <TableHead className="w-[10%]">Valor</TableHead>
+                      <TableHead className="w-[11%]">Data</TableHead>
+                      <TableHead className="w-[10%]">Status</TableHead>
+                      <TableHead className="w-24">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {items.map((request) => (
                       <TableRow key={request.id}>
-                        <TableCell className="font-medium">{request.description}</TableCell>
+                        <TableCell className="font-medium">
+                          <span className="block truncate" title={request.description}>{request.description}</span>
+                        </TableCell>
                         <TableCell>{request.requester.name}</TableCell>
                         <TableCell>{request.category.name}</TableCell>
                         <TableCell>{formatCurrency(request.amount)}</TableCell>
@@ -195,7 +197,7 @@ export function ReimbursementsHistoryPage() {
                         <TableCell><StatusBadge status={request.status} /></TableCell>
                         <TableCell>
                           <Link
-                            className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium hover:bg-slate-100"
+                            className="inline-flex h-7 items-center rounded-md border border-slate-200 bg-white px-2 text-xs font-medium hover:bg-slate-100"
                             to={`/reimbursements/${request.id}`}
                           >
                             Detalhe
