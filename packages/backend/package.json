@@ -13,6 +13,9 @@
     "db:studio": "bunx prisma studio",
     "db:seed": "bunx prisma db seed"
   },
+  "prisma": {
+    "seed": "bun prisma/seed.ts"
+  },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
     "@types/bun": "latest",

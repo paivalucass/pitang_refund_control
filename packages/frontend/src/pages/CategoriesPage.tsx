@@ -25,6 +25,7 @@ export function CategoriesPage() {
   const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
   const [filters, setFilters] = React.useState<CategoryListFilters>({})
   const [loading, setLoading] = React.useState(true)
+  const [hasLoaded, setHasLoaded] = React.useState(false)
   const [error, setError] = React.useState('')
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [editing, setEditing] = React.useState<Category | null>(null)
@@ -42,6 +43,7 @@ export function CategoriesPage() {
       }
       setCategories(response.data)
       setMeta(response.meta)
+      setHasLoaded(true)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível carregar categorias.')
     } finally {
@@ -115,9 +117,9 @@ export function CategoriesPage() {
           Nova Categoria
         </Button>
       </div>
-      {loading ? <LoadingTable /> : null}
-      {error ? <ErrorState message={error} onRetry={() => void load()} /> : null}
-      {!loading && !error ? (
+      {loading && !hasLoaded ? <LoadingTable /> : null}
+      {error && !loading ? <ErrorState message={error} onRetry={() => void load()} /> : null}
+      {hasLoaded && !error ? (
         <Card>
           <CardHeader><CardTitle>Lista de categorias</CardTitle></CardHeader>
           <CardContent>

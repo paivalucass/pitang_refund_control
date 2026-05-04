@@ -34,6 +34,7 @@ export function ReimbursementsHistoryPage() {
   const [categories, setCategories] = React.useState<Category[]>([])
   const [filters, setFilters] = React.useState<ReimbursementListFilters>({ sortBy: 'createdAt', sortOrder: 'desc' })
   const [loading, setLoading] = React.useState(true)
+  const [hasLoaded, setHasLoaded] = React.useState(false)
   const [error, setError] = React.useState('')
   const description =
     user?.role === 'FINANCE'
@@ -51,6 +52,7 @@ export function ReimbursementsHistoryPage() {
       }
       setItems(response.data)
       setMeta(response.meta)
+      setHasLoaded(true)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível carregar o histórico.')
     } finally {
@@ -95,10 +97,10 @@ export function ReimbursementsHistoryPage() {
         </div>
       </div>
 
-      {loading ? <LoadingTable /> : null}
-      {error ? <ErrorState message={error} onRetry={() => void load()} /> : null}
+      {loading && !hasLoaded ? <LoadingTable /> : null}
+      {error && !loading ? <ErrorState message={error} onRetry={() => void load()} /> : null}
 
-      {!loading && !error ? (
+      {hasLoaded && !error ? (
         <Card>
           <CardHeader>
             <CardTitle>Histórico de solicitações</CardTitle>

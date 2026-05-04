@@ -51,6 +51,7 @@ export function DashboardPage() {
   const [categories, setCategories] = React.useState<Category[]>([])
   const [filters, setFilters] = React.useState<ReimbursementListFilters>({ sortBy: 'createdAt', sortOrder: 'desc' })
   const [loading, setLoading] = React.useState(true)
+  const [hasLoaded, setHasLoaded] = React.useState(false)
   const [error, setError] = React.useState('')
   const [confirm, setConfirm] = React.useState<{ title: string; description: string; action: () => Promise<void> } | null>(null)
   const [rejectTarget, setRejectTarget] = React.useState<Reimbursement | null>(null)
@@ -67,6 +68,7 @@ export function DashboardPage() {
       }
       setItems(response.data)
       setMeta(response.meta)
+      setHasLoaded(true)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível carregar solicitações.')
     } finally {
@@ -205,9 +207,9 @@ export function DashboardPage() {
           ) : null}
         </div>
       </div>
-      {loading ? <LoadingTable /> : null}
-      {error ? <ErrorState message={error} onRetry={() => void load()} /> : null}
-      {!loading && !error ? (
+      {loading && !hasLoaded ? <LoadingTable /> : null}
+      {error && !loading ? <ErrorState message={error} onRetry={() => void load()} /> : null}
+      {hasLoaded && !error ? (
         <Card>
           <CardHeader>
             <CardTitle>Solicitações</CardTitle>

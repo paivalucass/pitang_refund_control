@@ -28,6 +28,7 @@ export function UsersPage() {
   const [meta, setMeta] = React.useState<PaginationMeta>(initialMeta)
   const [filters, setFilters] = React.useState<UserListFilters>({})
   const [loading, setLoading] = React.useState(true)
+  const [hasLoaded, setHasLoaded] = React.useState(false)
   const [error, setError] = React.useState('')
 
   const load = React.useCallback(async () => {
@@ -41,6 +42,7 @@ export function UsersPage() {
       }
       setUsers(response.data)
       setMeta(response.meta)
+      setHasLoaded(true)
     } catch (err) {
       setError((err as ApiError).message || 'Não foi possível carregar usuários.')
     } finally {
@@ -67,9 +69,9 @@ export function UsersPage() {
         <h1 className="text-2xl font-semibold">Usuários</h1>
         <p className="text-sm text-slate-500">Consulta dos usuários cadastrados.</p>
       </div>
-      {loading ? <LoadingTable /> : null}
-      {error ? <ErrorState message={error} onRetry={() => void load()} /> : null}
-      {!loading && !error ? (
+      {loading && !hasLoaded ? <LoadingTable /> : null}
+      {error && !loading ? <ErrorState message={error} onRetry={() => void load()} /> : null}
+      {hasLoaded && !error ? (
         <Card>
           <CardHeader><CardTitle>Lista de usuários</CardTitle></CardHeader>
           <CardContent>
