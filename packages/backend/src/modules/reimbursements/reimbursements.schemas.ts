@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AttachmentType, RequestStatus } from "../../generated/prisma";
+import { RequestStatus } from "../../generated/prisma";
 import { paginationQuerySchema } from "../../lib/pagination.ts";
 
 export const reimbursementParamsSchema = z.object({
@@ -43,11 +43,6 @@ export const rejectReimbursementSchema = z.object({
 
 export const attachmentSchema = z.object({
   params: reimbursementParamsSchema.shape.params,
-  body: z.object({
-    fileName: z.string().trim().min(1, "Nome do arquivo é obrigatório"),
-    fileUrl: z.string().trim().min(1, "URL do arquivo é obrigatória"),
-    fileType: z.enum(AttachmentType),
-  }),
 });
 
 export const listReimbursementsQuerySchema = paginationQuerySchema.extend({

@@ -5,12 +5,14 @@ import { categoriesRouter } from "./src/modules/categories/categories.router.ts"
 import { reimbursementsRouter } from "./src/modules/reimbursements/reimbursements.router.ts";
 import { usersRouter } from "./src/modules/users/users.router.ts";
 import { errorHandler } from "./src/middlewares/errorHandler.ts";
+import { uploadsDir } from "./src/middlewares/upload.ts";
 
 const app = express();
 
 // --------------- Global Middlewares ---------------
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static(uploadsDir));
 
 // --------------- Routes ---------------
 app.use("/auth", authRouter);

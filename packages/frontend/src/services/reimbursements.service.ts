@@ -1,5 +1,5 @@
 import { apiFetch } from '@/services/api'
-import type { Attachment, AttachmentType, PaginatedResponse, Reimbursement, RequestHistory, RequestStatus } from '@/types'
+import type { Attachment, PaginatedResponse, Reimbursement, RequestHistory, RequestStatus } from '@/types'
 
 export type ReimbursementFormData = {
   categoryId: string
@@ -79,13 +79,13 @@ export function getHistory(id: string, page = 1, limit = 10) {
   return apiFetch<PaginatedResponse<RequestHistory>>(`/reimbursements/${id}/history?page=${page}&limit=${limit}`)
 }
 
-export function addAttachment(
-  id: string,
-  data: { fileName: string; fileUrl: string; fileType: AttachmentType },
-) {
+export function addAttachment(id: string, file: File) {
+  const data = new FormData()
+  data.append('file', file)
+
   return apiFetch<Attachment>(`/reimbursements/${id}/attachments`, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: data,
   })
 }
 

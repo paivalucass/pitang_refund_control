@@ -7,7 +7,7 @@ import { LoadingTable } from '@/components/LoadingTable'
 import { ReimbursementForm } from '@/components/ReimbursementForm'
 import { useApi } from '@/hooks/useApi'
 import { listCategories } from '@/services/categories.service'
-import { createReimbursement, type ReimbursementFormData } from '@/services/reimbursements.service'
+import { addAttachment, createReimbursement, type ReimbursementFormData } from '@/services/reimbursements.service'
 import type { ApiError } from '@/types'
 
 export function NewReimbursementPage() {
@@ -17,12 +17,16 @@ export function NewReimbursementPage() {
   const categories = categoriesResponse?.data
   const [saving, setSaving] = React.useState(false)
   const [saveError, setSaveError] = React.useState('')
+  const [attachments, setAttachments] = React.useState<File[]>([])
 
   async function handleSubmit(data: ReimbursementFormData) {
     setSaving(true)
     setSaveError('')
     try {
-      await createReimbursement(data)
+      const reimbursement = await createReimbursement(data)
+      if (attachments.length > 0) {
+        await Promise.all(attachments.map((file) => addAttachment(reimbursement.id, file)))
+      }
       toast.success('Solicitação criada com sucesso.')
       navigate('/dashboard')
     } catch (err) {
@@ -53,7 +57,14 @@ export function NewReimbursementPage() {
           </CardHeader>
           <CardContent>
             {saveError ? <p className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{saveError}</p> : null}
-            <ReimbursementForm categories={categories} submitLabel="Criar solicitação" loading={saving} onSubmit={handleSubmit} />
+            <ReimbursementForm
+              attachments={attachments}
+              categories={categories}
+              submitLabel="Criar solicitação"
+              loading={saving}
+              onAttachmentsChange={setAttachments}
+              onSubmit={handleSubmit}
+            />
           </CardContent>
         </Card>
       ) : null}

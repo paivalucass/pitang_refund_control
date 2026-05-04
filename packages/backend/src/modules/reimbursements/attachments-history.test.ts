@@ -9,7 +9,7 @@ import {
 } from "../../test/factories.ts";
 
 describe("reimbursement attachments and history", () => {
-  it("adds and lists simulated attachments for a draft reimbursement owner", async () => {
+  it("uploads and lists attachments for a draft reimbursement owner", async () => {
     const employee = await createUserAndToken(UserRole.EMPLOYEE);
     const category = await createCategory();
     const reimbursement = await createReimbursement(employee.user.id, category.id);
@@ -17,10 +17,9 @@ describe("reimbursement attachments and history", () => {
     const created = await request(app)
       .post(`/reimbursements/${reimbursement.id}/attachments`)
       .set(auth(employee.token))
-      .send({
-        fileName: "receipt.pdf",
-        fileUrl: "https://example.com/receipt.pdf",
-        fileType: "PDF",
+      .attach("file", Buffer.from("%PDF-1.4 fake receipt"), {
+        filename: "receipt.pdf",
+        contentType: "application/pdf",
       });
 
     const listed = await request(app)
@@ -33,6 +32,7 @@ describe("reimbursement attachments and history", () => {
       fileName: "receipt.pdf",
       fileType: "PDF",
     });
+    expect(created.body.fileUrl).toContain("/uploads/");
     expect(listed.status).toBe(200);
     expect(listed.body.data).toHaveLength(1);
     expect(listed.body.meta).toMatchObject({ page: 1, limit: 10, total: 1, totalPages: 1 });
@@ -46,10 +46,9 @@ describe("reimbursement attachments and history", () => {
     const response = await request(app)
       .post(`/reimbursements/${reimbursement.id}/attachments`)
       .set(auth(employee.token))
-      .send({
-        fileName: "receipt.exe",
-        fileUrl: "https://example.com/receipt.exe",
-        fileType: "EXE",
+      .attach("file", Buffer.from("not allowed"), {
+        filename: "receipt.txt",
+        contentType: "text/plain",
       });
 
     expect(response.status).toBe(400);
@@ -64,10 +63,9 @@ describe("reimbursement attachments and history", () => {
     const response = await request(app)
       .post(`/reimbursements/${reimbursement.id}/attachments`)
       .set(auth(other.token))
-      .send({
-        fileName: "receipt.pdf",
-        fileUrl: "https://example.com/receipt.pdf",
-        fileType: "PDF",
+      .attach("file", Buffer.from("%PDF-1.4 fake receipt"), {
+        filename: "receipt.pdf",
+        contentType: "application/pdf",
       });
 
     expect(response.status).toBe(403);

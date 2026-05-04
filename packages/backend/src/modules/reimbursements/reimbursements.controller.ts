@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { AttachmentType } from "../../generated/prisma/index";
+import { AppError } from "../../lib/AppError.ts";
 import { getPaginationQuery, getValidatedQuery } from "../../lib/pagination.ts";
 import type { ListReimbursementsQuery } from "./reimbursements.schemas.ts";
 import * as reimbursementsService from "./reimbursements.service.ts";
@@ -99,9 +101,29 @@ export async function history(req: Request, res: Response): Promise<void> {
 }
 
 export async function addAttachment(req: Request, res: Response): Promise<void> {
+  if (!req.file) {
+    throw new AppError("Arquivo é obrigatório", 400);
+  }
+
+  const fileTypeByMime = {
+    "application/pdf": AttachmentType.PDF,
+    "image/jpeg": AttachmentType.JPG,
+    "image/png": AttachmentType.PNG,
+  } as const;
+  const fileType = fileTypeByMime[req.file.mimetype as keyof typeof fileTypeByMime];
+
+  if (!fileType) {
+    throw new AppError("Tipo de arquivo inválido. Use PDF, JPG ou PNG.", 400);
+  }
+
+  const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
   const attachment = await reimbursementsService.addAttachment(
     getId(req),
-    req.body,
+    {
+      fileName: req.file.originalname,
+      fileUrl,
+      fileType,
+    },
     req.user
   );
   res.status(201).json(attachment);

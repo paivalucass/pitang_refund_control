@@ -9,11 +9,16 @@ import { firstZodError, reimbursementSchema } from '@/lib/validation'
 import type { Category } from '@/types'
 import type { ReimbursementFormData } from '@/services/reimbursements.service'
 
+const ACCEPTED_ATTACHMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024
+
 type ReimbursementFormProps = {
   categories: Category[]
   initialValues?: Partial<ReimbursementFormData>
   submitLabel: string
   loading?: boolean
+  attachments?: File[]
+  onAttachmentsChange?: (files: File[]) => void
   onSubmit: (data: ReimbursementFormData) => void
 }
 
@@ -22,6 +27,8 @@ export function ReimbursementForm({
   initialValues,
   submitLabel,
   loading = false,
+  attachments,
+  onAttachmentsChange,
   onSubmit,
 }: ReimbursementFormProps) {
   const [categoryId, setCategoryId] = React.useState(initialValues?.categoryId ?? '')
@@ -56,6 +63,20 @@ export function ReimbursementForm({
     }
 
     onSubmit(result.data)
+  }
+
+  function handleAttachmentsChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? [])
+    const invalidFile = files.find((file) => !ACCEPTED_ATTACHMENT_TYPES.includes(file.type) || file.size > MAX_ATTACHMENT_SIZE)
+    if (invalidFile) {
+      setError('Anexe apenas arquivos PDF, JPG ou PNG com até 5MB cada.')
+      event.target.value = ''
+      onAttachmentsChange?.([])
+      return
+    }
+
+    setError('')
+    onAttachmentsChange?.(files)
   }
 
   return (
@@ -97,6 +118,26 @@ export function ReimbursementForm({
           <Input id="expenseDate" type="date" value={expenseDate} onChange={(event) => setExpenseDate(event.target.value)} />
         </div>
       </div>
+      {onAttachmentsChange ? (
+        <div className="space-y-2">
+          <Label htmlFor="attachments">Anexos</Label>
+          <Input
+            id="attachments"
+            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+            multiple
+            type="file"
+            onChange={handleAttachmentsChange}
+          />
+          <p className="text-xs text-slate-500">Formatos aceitos: PDF, JPG ou PNG até 5MB cada.</p>
+          {attachments?.length ? (
+            <ul className="space-y-1 text-sm text-slate-600">
+              {attachments.map((file) => (
+                <li className="truncate" key={`${file.name}-${file.size}`}>{file.name}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
       <Button type="submit" disabled={loading}>
         {loading ? 'Salvando...' : submitLabel}
       </Button>

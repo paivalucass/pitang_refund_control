@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
 import { toast } from '@/components/ui/sonner'
 import { Textarea } from '@/components/ui/textarea'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -28,7 +27,7 @@ import {
   rejectReimbursement,
   submitReimbursement,
 } from '@/services/reimbursements.service'
-import type { ApiError, Attachment, AttachmentType, PaginationMeta, Reimbursement, RequestHistory } from '@/types'
+import type { ApiError, Attachment, PaginationMeta, Reimbursement, RequestHistory } from '@/types'
 
 const PAGE_SIZE = 10
 const initialMeta: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 0 }
@@ -50,7 +49,7 @@ export function ReimbursementDetailPage() {
   const [rejectOpen, setRejectOpen] = React.useState(false)
   const [rejectionReason, setRejectionReason] = React.useState('')
   const [attachmentOpen, setAttachmentOpen] = React.useState(false)
-  const [attachment, setAttachment] = React.useState({ fileName: '', fileUrl: '', fileType: 'PDF' as AttachmentType })
+  const [attachmentFile, setAttachmentFile] = React.useState<File | null>(null)
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -107,10 +106,10 @@ export function ReimbursementDetailPage() {
 
   async function handleAttachment(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!attachment.fileName || !attachment.fileUrl) return
-    await addAttachment(id, attachment)
+    if (!attachmentFile) return
+    await addAttachment(id, attachmentFile)
     toast.success('Anexo adicionado com sucesso.')
-    setAttachment({ fileName: '', fileUrl: '', fileType: 'PDF' })
+    setAttachmentFile(null)
     setAttachmentOpen(false)
     setAttachmentsPage(1)
     await load()
@@ -195,8 +194,12 @@ export function ReimbursementDetailPage() {
               <CardContent className="space-y-3">
                 {attachments.length === 0 ? <p className="text-sm text-slate-500">Nenhum anexo cadastrado.</p> : null}
                 {attachments.map((item) => (
-                  <a className="flex items-center gap-3 rounded-md border p-3 text-sm hover:bg-slate-50" href={item.fileUrl} key={item.id} target="_blank">
-                    <File className="h-4 w-4" />
+                  <a className="flex items-center gap-3 rounded-md border p-3 text-sm hover:bg-slate-50" href={item.fileUrl} key={item.id} target="_blank" rel="noreferrer">
+                    {item.fileType === 'JPG' || item.fileType === 'PNG' ? (
+                      <img className="h-10 w-10 rounded border object-cover" src={item.fileUrl} alt="" />
+                    ) : (
+                      <File className="h-4 w-4" />
+                    )}
                     <span className="flex-1 truncate">{item.fileName}</span>
                     <span className="text-xs text-slate-500">{item.fileType}</span>
                   </a>
@@ -257,27 +260,31 @@ export function ReimbursementDetailPage() {
           </DialogFooter>
         </form>
       </Dialog>
-      <Dialog open={attachmentOpen} onOpenChange={setAttachmentOpen} title="Adicionar anexo">
+      <Dialog
+        open={attachmentOpen}
+        onOpenChange={(open) => {
+          setAttachmentOpen(open)
+          if (!open) setAttachmentFile(null)
+        }}
+        title="Adicionar anexo"
+      >
         <form className="space-y-4" onSubmit={handleAttachment}>
           <div className="space-y-2">
-            <Label htmlFor="fileName">Nome</Label>
-            <Input id="fileName" value={attachment.fileName} onChange={(event) => setAttachment({ ...attachment, fileName: event.target.value })} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fileUrl">URL</Label>
-            <Input id="fileUrl" value={attachment.fileUrl} onChange={(event) => setAttachment({ ...attachment, fileUrl: event.target.value })} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fileType">Tipo</Label>
-            <Select id="fileType" value={attachment.fileType} onChange={(event) => setAttachment({ ...attachment, fileType: event.target.value as AttachmentType })}>
-              <option value="PDF">PDF</option>
-              <option value="JPG">JPG</option>
-              <option value="PNG">PNG</option>
-            </Select>
+            <Label htmlFor="attachmentFile">Arquivo</Label>
+            <Input
+              id="attachmentFile"
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              type="file"
+              onChange={(event) => setAttachmentFile(event.target.files?.[0] ?? null)}
+            />
+            <p className="text-xs text-slate-500">Formatos aceitos: PDF, JPG ou PNG até 5MB.</p>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setAttachmentOpen(false)}>Voltar</Button>
-            <Button type="submit">Adicionar</Button>
+            <Button type="button" variant="outline" onClick={() => {
+              setAttachmentOpen(false)
+              setAttachmentFile(null)
+            }}>Voltar</Button>
+            <Button type="submit" disabled={!attachmentFile}>Adicionar</Button>
           </DialogFooter>
         </form>
       </Dialog>

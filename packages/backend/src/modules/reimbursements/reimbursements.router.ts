@@ -2,6 +2,7 @@ import { Router } from "express";
 import { UserRole } from "../../generated/prisma/index";
 import { authenticate } from "../../middlewares/authenticate.ts";
 import { authorize } from "../../middlewares/authorize.ts";
+import { upload } from "../../middlewares/upload.ts";
 import { validate } from "../../middlewares/validate.ts";
 import { paginationQuerySchema } from "../../lib/pagination.ts";
 import {
@@ -103,6 +104,7 @@ reimbursementsRouter.post(
   "/:id/attachments",
   authorize(UserRole.EMPLOYEE),
   validate(attachmentSchema),
+  upload.single("file"),
   addAttachment
 );
 reimbursementsRouter.get(
