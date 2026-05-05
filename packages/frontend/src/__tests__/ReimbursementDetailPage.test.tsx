@@ -38,6 +38,7 @@ jest.mock('@/services/reimbursements.service', () => ({
   }),
   payReimbursement: jest.fn(),
   rejectReimbursement: jest.fn(),
+  removeAttachment: jest.fn(),
   submitReimbursement: jest.fn(),
 }))
 

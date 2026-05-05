@@ -19,10 +19,12 @@ import {
   past,
   pay,
   reject,
+  removeAttachment,
   submit,
   update,
 } from "./reimbursements.controller.ts";
 import {
+  attachmentParamsSchema,
   attachmentSchema,
   createReimbursementSchema,
   listReimbursementsQuerySchema,
@@ -128,4 +130,10 @@ reimbursementsRouter.get(
     query: paginationQuerySchema,
   })),
   listAttachments
+);
+reimbursementsRouter.delete(
+  "/:id/attachments/:attachmentId",
+  authorize(UserRole.EMPLOYEE),
+  validate(attachmentParamsSchema),
+  removeAttachment
 );

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { File, Paperclip, SearchCheck } from 'lucide-react'
+import { File, Paperclip, SearchCheck, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,6 +27,7 @@ import {
   listAttachments,
   payReimbursement,
   rejectReimbursement,
+  removeAttachment,
   submitReimbursement,
   type ReimbursementAnalysis,
 } from '@/services/reimbursements.service'
@@ -57,6 +58,7 @@ export function ReimbursementDetailPage() {
   const [attachmentOpen, setAttachmentOpen] = React.useState(false)
   const [attachmentFile, setAttachmentFile] = React.useState<File | null>(null)
   const [attachmentError, setAttachmentError] = React.useState('')
+  const [removingAttachmentId, setRemovingAttachmentId] = React.useState('')
   const [analysis, setAnalysis] = React.useState<ReimbursementAnalysis | null>(null)
   const [analysisLoading, setAnalysisLoading] = React.useState(false)
   const [analysisError, setAnalysisError] = React.useState('')
@@ -155,6 +157,19 @@ export function ReimbursementDetailPage() {
 
     setAttachmentFile(file)
     setAttachmentError('')
+  }
+
+  async function handleRemoveAttachment(attachmentId: string) {
+    setRemovingAttachmentId(attachmentId)
+    try {
+      await removeAttachment(id, attachmentId)
+      toast.success('Anexo removido com sucesso.')
+      await load()
+    } catch (err) {
+      toast.error((err as ApiError).message || 'Não foi possível remover o anexo.')
+    } finally {
+      setRemovingAttachmentId('')
+    }
   }
 
   function confirmAction(title: string, action: () => Promise<void>) {
@@ -261,15 +276,30 @@ export function ReimbursementDetailPage() {
               <CardContent className="space-y-3">
                 {attachments.length === 0 ? <p className="text-sm text-slate-500">Nenhum anexo cadastrado.</p> : null}
                 {attachments.map((item) => (
-                  <a className="flex items-center gap-3 rounded-md border p-3 text-sm hover:bg-slate-50" href={item.fileUrl} key={item.id} target="_blank" rel="noreferrer">
-                    {item.fileType === 'JPG' || item.fileType === 'PNG' ? (
-                      <img className="h-10 w-10 rounded border object-cover" src={item.fileUrl} alt="" />
-                    ) : (
-                      <File className="h-4 w-4" />
-                    )}
-                    <span className="flex-1 truncate">{item.fileName}</span>
-                    <span className="text-xs text-slate-500">{item.fileType}</span>
-                  </a>
+                  <div className="flex items-center gap-2 rounded-md border p-3 text-sm hover:bg-slate-50" key={item.id}>
+                    <a className="flex min-w-0 flex-1 items-center gap-3" href={item.fileUrl} target="_blank" rel="noreferrer">
+                      {item.fileType === 'JPG' || item.fileType === 'PNG' ? (
+                        <img className="h-10 w-10 rounded border object-cover" src={item.fileUrl} alt="" />
+                      ) : (
+                        <File className="h-4 w-4 shrink-0" />
+                      )}
+                      <span className="flex-1 truncate">{item.fileName}</span>
+                      <span className="text-xs text-slate-500">{item.fileType}</span>
+                    </a>
+                    {canEdit ? (
+                      <Button
+                        aria-label={`Remover anexo ${item.fileName}`}
+                        className="h-8 w-8 shrink-0 p-0"
+                        disabled={removingAttachmentId === item.id}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                        onClick={() => void handleRemoveAttachment(item.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                  </div>
                 ))}
                 <PaginationControl
                   currentPage={attachmentsMeta.page}

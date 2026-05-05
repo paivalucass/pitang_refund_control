@@ -172,15 +172,15 @@ export function ReimbursementsHistoryPage() {
               />
             ) : (
               <>
-                <Table className="table-fixed">
+                <Table className="table-fixed min-w-[62rem] xl:min-w-0">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[32%]">Descrição</TableHead>
-                      <TableHead className="w-[17%]">Solicitante</TableHead>
-                      <TableHead className="w-[15%]">Categoria</TableHead>
-                      <TableHead className="w-[10%]">Valor</TableHead>
-                      <TableHead className="w-[11%]">Data</TableHead>
-                      <TableHead className="w-[10%]">Status</TableHead>
+                      <TableHead className="w-[34%]">Descrição</TableHead>
+                      <TableHead className="w-[16%]">Solicitante</TableHead>
+                      <TableHead className="w-[14%]">Categoria</TableHead>
+                      <TableHead className="w-[9%]">Valor</TableHead>
+                      <TableHead className="w-[10%]">Data</TableHead>
+                      <TableHead className="w-[9%]">Status</TableHead>
                       <TableHead className="w-24">Ações</TableHead>
                     </TableRow>
                   </TableHeader>

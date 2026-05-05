@@ -313,16 +313,16 @@ export function DashboardPage() {
               />
             ) : (
               <>
-                <Table className="table-fixed">
+                <Table className="table-fixed min-w-[68rem] xl:min-w-0">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[30%]">Descrição</TableHead>
-                      {showRequester ? <TableHead className="w-[16%]">Solicitante</TableHead> : null}
-                      <TableHead className="w-[14%]">Categoria</TableHead>
-                      <TableHead className="w-[10%]">Valor</TableHead>
-                      <TableHead className="w-[11%]">Data</TableHead>
-                      <TableHead className="w-[11%]">Status</TableHead>
-                      <TableHead className="w-64">Ações</TableHead>
+                      <TableHead className="w-[32%]">Descrição</TableHead>
+                      {showRequester ? <TableHead className="w-[15%]">Solicitante</TableHead> : null}
+                      <TableHead className="w-[13%]">Categoria</TableHead>
+                      <TableHead className="w-[9%]">Valor</TableHead>
+                      <TableHead className="w-[10%]">Data</TableHead>
+                      <TableHead className="w-[10%]">Status</TableHead>
+                      <TableHead className="w-56">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

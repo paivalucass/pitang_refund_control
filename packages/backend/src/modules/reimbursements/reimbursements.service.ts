@@ -523,6 +523,34 @@ export async function listAttachments(
   return paginatedResponse(data, { page, limit, total });
 }
 
+export async function removeAttachment(
+  id: string,
+  attachmentId: string,
+  userInput?: AuthUser
+) {
+  const user = requireUser(userInput);
+  const reimbursement = await findReimbursement(id);
+  ensureOwner(reimbursement, user);
+
+  if (reimbursement.status !== RequestStatus.DRAFT) {
+    throw new AppError("Anexos só podem ser removidos em solicitações em rascunho", 400);
+  }
+
+  const attachment = await prisma.attachment.findFirst({
+    where: {
+      id: attachmentId,
+      requestId: id,
+    },
+  });
+
+  if (!attachment) {
+    throw new AppError("Anexo não encontrado", 404);
+  }
+
+  await prisma.attachment.delete({ where: { id: attachmentId } });
+  await fs.unlink(path.join(uploadsDir, path.basename(attachment.fileUrl))).catch(() => undefined);
+}
+
 export async function analyzeAttachments(
   id: string,
   userInput?: AuthUser

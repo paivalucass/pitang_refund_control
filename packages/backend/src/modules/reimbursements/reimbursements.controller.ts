@@ -140,6 +140,15 @@ export async function listAttachments(req: Request, res: Response): Promise<void
   res.json(attachments);
 }
 
+export async function removeAttachment(req: Request, res: Response): Promise<void> {
+  await reimbursementsService.removeAttachment(
+    getId(req),
+    req.params.attachmentId as string,
+    req.user
+  );
+  res.status(204).send();
+}
+
 export async function extractData(req: Request, res: Response): Promise<void> {
   if (!req.file) {
     throw new AppError("Arquivo é obrigatório", 400);

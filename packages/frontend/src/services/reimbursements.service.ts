@@ -114,6 +114,10 @@ export function listAttachments(id: string, page = 1, limit = 10) {
   return apiFetch<PaginatedResponse<Attachment>>(`/reimbursements/${id}/attachments?page=${page}&limit=${limit}`)
 }
 
+export function removeAttachment(id: string, attachmentId: string) {
+  return apiFetch<void>(`/reimbursements/${id}/attachments/${attachmentId}`, { method: 'DELETE' })
+}
+
 export function extractDataFromAttachment(file: File) {
   const data = new FormData()
   data.append('file', file)

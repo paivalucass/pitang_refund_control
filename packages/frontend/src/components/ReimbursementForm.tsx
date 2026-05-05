@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -37,6 +38,8 @@ export function ReimbursementForm({
   const [expenseDate, setExpenseDate] = React.useState(initialValues?.expenseDate ?? '')
   const [error, setError] = React.useState('')
   const [extracting, setExtracting] = React.useState(false)
+  const attachmentInputRef = React.useRef<HTMLInputElement | null>(null)
+  const extractionRunRef = React.useRef(0)
   const activeCategories = categories.filter((category) => category.active)
   const selectedCategory = categories.find((category) => category.id === categoryId)
   const selectedLimit = selectedCategory?.valueLimit
@@ -80,9 +83,12 @@ export function ReimbursementForm({
     onAttachmentsChange?.(files)
     if (!files[0]) return
 
+    const extractionRun = extractionRunRef.current + 1
+    extractionRunRef.current = extractionRun
     setExtracting(true)
     try {
       const extracted = await extractDataFromAttachment(files[0])
+      if (extractionRunRef.current !== extractionRun) return
       if (extracted.amount !== undefined) setAmount(String(extracted.amount))
       if (extracted.expenseDate) setExpenseDate(extracted.expenseDate)
       if (extracted.description) setDescription((current) => current || extracted.description || '')
@@ -91,9 +97,20 @@ export function ReimbursementForm({
         if (matchedCategory) setCategoryId(matchedCategory.id)
       }
     } catch {
+      if (extractionRunRef.current !== extractionRun) return
       setError('Não foi possível analisar o comprovante automaticamente. Você ainda pode preencher os campos manualmente.')
     } finally {
-      setExtracting(false)
+      if (extractionRunRef.current === extractionRun) setExtracting(false)
+    }
+  }
+
+  function handleRemoveAttachment(index: number) {
+    const nextFiles = attachments?.filter((_file, fileIndex) => fileIndex !== index) ?? []
+    extractionRunRef.current += 1
+    setExtracting(false)
+    onAttachmentsChange?.(nextFiles)
+    if (nextFiles.length === 0 && attachmentInputRef.current) {
+      attachmentInputRef.current.value = ''
     }
   }
 
@@ -143,6 +160,7 @@ export function ReimbursementForm({
             id="attachments"
             accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
             multiple
+            ref={attachmentInputRef}
             type="file"
             onChange={handleAttachmentsChange}
           />
@@ -150,8 +168,20 @@ export function ReimbursementForm({
           {extracting ? <p className="text-xs font-medium text-red-700">Analisando comprovante...</p> : null}
           {attachments?.length ? (
             <ul className="space-y-1 text-sm text-slate-600">
-              {attachments.map((file) => (
-                <li className="truncate" key={`${file.name}-${file.size}`}>{file.name}</li>
+              {attachments.map((file, index) => (
+                <li className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2" key={`${file.name}-${file.size}-${index}`}>
+                  <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                  <Button
+                    aria-label={`Remover anexo ${file.name}`}
+                    className="h-7 w-7 shrink-0 p-0"
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                    onClick={() => handleRemoveAttachment(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </li>
               ))}
             </ul>
           ) : null}
