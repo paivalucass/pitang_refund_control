@@ -5,14 +5,14 @@ import { AppError } from "./AppError.ts";
 let client: SupabaseClient | undefined;
 
 export function ensureSupabaseConfigured() {
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new AppError("Supabase Storage não configurado", 500);
   }
 }
 
 export function getSupabase() {
   ensureSupabaseConfigured();
-  client ??= createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+  client ??= createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       persistSession: false,
     },

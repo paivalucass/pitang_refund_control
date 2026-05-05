@@ -511,7 +511,7 @@ async function uploadAttachmentFile(fileName: string, fileBuffer: Buffer, mimeTy
   const extension = path.extname(fileName).toLowerCase();
   const storagePath = `${randomUUID()}${extension}`;
 
-  if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
+  if (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
     const supabase = getSupabase();
     const { error } = await supabase.storage
       .from(env.SUPABASE_ATTACHMENTS_BUCKET)
@@ -587,7 +587,7 @@ export async function removeAttachment(
 
 async function removeAttachmentFile(fileUrl: string) {
   const storagePath = getStoragePathFromPublicUrl(fileUrl);
-  if (storagePath && env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
+  if (storagePath && env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
     const supabase = getSupabase();
     const { error } = await supabase.storage
       .from(env.SUPABASE_ATTACHMENTS_BUCKET)
