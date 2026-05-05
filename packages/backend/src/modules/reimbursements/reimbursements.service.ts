@@ -9,11 +9,14 @@ import {
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import dayjs from "dayjs";
 import { analyzeDocument, type AnalysisResult } from "../analysis/analysis.service.ts";
 import { AppError } from "../../lib/AppError.ts";
 import { getPagination, paginatedResponse, type PaginationQuery } from "../../lib/pagination.ts";
 import { prisma } from "../../lib/prisma.ts";
+import { env } from "../../lib/env.ts";
+import { getStoragePathFromPublicUrl, getSupabase } from "../../lib/supabase.ts";
 import { uploadsDir } from "../../middlewares/upload.ts";
 import type { ListReimbursementsQuery } from "./reimbursements.schemas.ts";
 
@@ -34,7 +37,8 @@ type UpdateReimbursementInput = Partial<CreateReimbursementInput>;
 
 type AttachmentInput = {
   fileName: string;
-  fileUrl: string;
+  fileBuffer: Buffer;
+  mimeType: string;
   fileType: AttachmentType;
 };
 
@@ -491,14 +495,44 @@ export async function addAttachment(
     throw new AppError("Anexos só podem ser adicionados em solicitações em rascunho", 400);
   }
 
+  const fileUrl = await uploadAttachmentFile(data.fileName, data.fileBuffer, data.mimeType);
+
   return prisma.attachment.create({
     data: {
       requestId: id,
       fileName: data.fileName,
-      fileUrl: data.fileUrl,
+      fileUrl,
       fileType: data.fileType,
     },
   });
+}
+
+async function uploadAttachmentFile(fileName: string, fileBuffer: Buffer, mimeType: string) {
+  const extension = path.extname(fileName).toLowerCase();
+  const storagePath = `${randomUUID()}${extension}`;
+
+  if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
+    const supabase = getSupabase();
+    const { error } = await supabase.storage
+      .from(env.SUPABASE_ATTACHMENTS_BUCKET)
+      .upload(storagePath, fileBuffer, {
+        contentType: mimeType,
+        upsert: false,
+      });
+
+    if (error) {
+      throw new AppError(`Não foi possível enviar o anexo: ${error.message}`, 500);
+    }
+
+    const { data } = supabase.storage
+      .from(env.SUPABASE_ATTACHMENTS_BUCKET)
+      .getPublicUrl(storagePath);
+    return data.publicUrl;
+  }
+
+  await fs.mkdir(uploadsDir, { recursive: true });
+  await fs.writeFile(path.join(uploadsDir, storagePath), fileBuffer);
+  return `/api/uploads/${storagePath}`;
 }
 
 export async function listAttachments(
@@ -547,8 +581,24 @@ export async function removeAttachment(
     throw new AppError("Anexo não encontrado", 404);
   }
 
+  await removeAttachmentFile(attachment.fileUrl);
   await prisma.attachment.delete({ where: { id: attachmentId } });
-  await fs.unlink(path.join(uploadsDir, path.basename(attachment.fileUrl))).catch(() => undefined);
+}
+
+async function removeAttachmentFile(fileUrl: string) {
+  const storagePath = getStoragePathFromPublicUrl(fileUrl);
+  if (storagePath && env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
+    const supabase = getSupabase();
+    const { error } = await supabase.storage
+      .from(env.SUPABASE_ATTACHMENTS_BUCKET)
+      .remove([storagePath]);
+    if (error) {
+      throw new AppError(`Não foi possível remover o anexo: ${error.message}`, 500);
+    }
+    return;
+  }
+
+  await fs.unlink(path.join(uploadsDir, path.basename(fileUrl))).catch(() => undefined);
 }
 
 export async function analyzeAttachments(
@@ -569,8 +619,7 @@ export async function analyzeAttachments(
 
   const results = await Promise.all(
     reimbursement.attachments.map(async (attachment) => {
-      const filePath = path.join(uploadsDir, path.basename(attachment.fileUrl));
-      const fileBuffer = await fs.readFile(filePath);
+      const fileBuffer = await readAttachmentBuffer(attachment.fileUrl);
       return analyzeDocument(fileBuffer, mimeTypeFromAttachment(attachment.fileType), {
         amount: Number(reimbursement.amount),
         expenseDate: reimbursement.expenseDate,
@@ -581,6 +630,18 @@ export async function analyzeAttachments(
   );
 
   return results.reduce((best, current) => (current.score > best.score ? current : best));
+}
+
+async function readAttachmentBuffer(fileUrl: string) {
+  if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      throw new AppError("Não foi possível baixar o anexo para análise", 500);
+    }
+    return Buffer.from(await response.arrayBuffer());
+  }
+
+  return fs.readFile(path.join(uploadsDir, path.basename(fileUrl)));
 }
 
 function mimeTypeFromAttachment(fileType: AttachmentType) {

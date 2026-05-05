@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import fs from "node:fs/promises";
 import { AttachmentType } from "../../generated/prisma/index";
 import { extractEntities, extractText } from "../analysis/analysis.service.ts";
 import { AppError } from "../../lib/AppError.ts";
@@ -118,12 +117,12 @@ export async function addAttachment(req: Request, res: Response): Promise<void> 
     throw new AppError("Tipo de arquivo inválido. Use PDF, JPG ou PNG.", 400);
   }
 
-  const fileUrl = `/api/uploads/${req.file.filename}`;
   const attachment = await reimbursementsService.addAttachment(
     getId(req),
     {
       fileName: req.file.originalname,
-      fileUrl,
+      fileBuffer: req.file.buffer,
+      mimeType: req.file.mimetype,
       fileType,
     },
     req.user
@@ -154,21 +153,17 @@ export async function extractData(req: Request, res: Response): Promise<void> {
     throw new AppError("Arquivo é obrigatório", 400);
   }
 
-  try {
-    const text = await extractText(await fs.readFile(req.file.path), req.file.mimetype);
-    const data = extractEntities(text);
-    res.json({
-      amount: data.amount,
-      expenseDate: data.expenseDate,
-      description: data.description,
-      categoryName: data.categoryName,
-      categoryConfidence: data.categoryConfidence,
-      matchedKeywords: data.matchedKeywords,
-      text: data.text,
-    });
-  } finally {
-    await fs.unlink(req.file.path).catch(() => undefined);
-  }
+  const text = await extractText(req.file.buffer, req.file.mimetype);
+  const data = extractEntities(text);
+  res.json({
+    amount: data.amount,
+    expenseDate: data.expenseDate,
+    description: data.description,
+    categoryName: data.categoryName,
+    categoryConfidence: data.categoryConfidence,
+    matchedKeywords: data.matchedKeywords,
+    text: data.text,
+  });
 }
 
 export async function analyzeAttachments(req: Request, res: Response): Promise<void> {

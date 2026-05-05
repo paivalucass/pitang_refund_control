@@ -1,6 +1,8 @@
 import type { ApiError } from '@/types'
 
-const BASE_URL = '/api'
+declare const __API_BASE_URL__: string | undefined
+
+const BASE_URL = typeof __API_BASE_URL__ !== 'undefined' ? __API_BASE_URL__ : '/api'
 const TOKEN_KEY = 'pitang_refund_token'
 const REFRESH_TOKEN_KEY = 'pitang_refund_refresh_token'
 const USER_KEY = 'pitang_refund_user'
