@@ -16,6 +16,7 @@ jest.mock('@/services/categories.service', () => ({
 jest.mock('@/services/reimbursements.service', () => ({
   createReimbursement: jest.fn().mockResolvedValue({ id: 'req-1' }),
   addAttachment: jest.fn().mockResolvedValue({ id: 'att-1' }),
+  extractDataFromAttachment: jest.fn().mockResolvedValue({}),
 }))
 
 test('valida campos obrigatorios', async () => {

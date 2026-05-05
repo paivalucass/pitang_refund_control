@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { formatCurrency } from '@/lib/format'
 import { firstZodError, reimbursementSchema } from '@/lib/validation'
 import type { Category } from '@/types'
-import type { ReimbursementFormData } from '@/services/reimbursements.service'
+import { extractDataFromAttachment, type ReimbursementFormData } from '@/services/reimbursements.service'
 
 const ACCEPTED_ATTACHMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024
@@ -36,6 +36,7 @@ export function ReimbursementForm({
   const [amount, setAmount] = React.useState(initialValues?.amount?.toString() ?? '')
   const [expenseDate, setExpenseDate] = React.useState(initialValues?.expenseDate ?? '')
   const [error, setError] = React.useState('')
+  const [extracting, setExtracting] = React.useState(false)
   const activeCategories = categories.filter((category) => category.active)
   const selectedCategory = categories.find((category) => category.id === categoryId)
   const selectedLimit = selectedCategory?.valueLimit
@@ -65,7 +66,7 @@ export function ReimbursementForm({
     onSubmit(result.data)
   }
 
-  function handleAttachmentsChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAttachmentsChange(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
     const invalidFile = files.find((file) => !ACCEPTED_ATTACHMENT_TYPES.includes(file.type) || file.size > MAX_ATTACHMENT_SIZE)
     if (invalidFile) {
@@ -77,6 +78,23 @@ export function ReimbursementForm({
 
     setError('')
     onAttachmentsChange?.(files)
+    if (!files[0]) return
+
+    setExtracting(true)
+    try {
+      const extracted = await extractDataFromAttachment(files[0])
+      if (extracted.amount !== undefined) setAmount(String(extracted.amount))
+      if (extracted.expenseDate) setExpenseDate(extracted.expenseDate)
+      if (extracted.description) setDescription((current) => current || extracted.description || '')
+      if (extracted.categoryName) {
+        const matchedCategory = activeCategories.find((category) => normalizeCategory(category.name) === normalizeCategory(extracted.categoryName ?? ''))
+        if (matchedCategory) setCategoryId(matchedCategory.id)
+      }
+    } catch {
+      setError('Não foi possível analisar o comprovante automaticamente. Você ainda pode preencher os campos manualmente.')
+    } finally {
+      setExtracting(false)
+    }
   }
 
   return (
@@ -129,6 +147,7 @@ export function ReimbursementForm({
             onChange={handleAttachmentsChange}
           />
           <p className="text-xs text-slate-500">Formatos aceitos: PDF, JPG ou PNG até 5MB cada.</p>
+          {extracting ? <p className="text-xs font-medium text-red-700">Analisando comprovante...</p> : null}
           {attachments?.length ? (
             <ul className="space-y-1 text-sm text-slate-600">
               {attachments.map((file) => (
@@ -143,4 +162,8 @@ export function ReimbursementForm({
       </Button>
     </form>
   )
+}
+
+function normalizeCategory(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '')
 }

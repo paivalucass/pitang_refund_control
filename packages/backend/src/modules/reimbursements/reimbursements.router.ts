@@ -7,10 +7,12 @@ import { validate } from "../../middlewares/validate.ts";
 import { paginationQuerySchema } from "../../lib/pagination.ts";
 import {
   addAttachment,
+  analyzeAttachments,
   approve,
   cancel,
   create,
   detail,
+  extractData,
   history,
   list,
   listAttachments,
@@ -50,6 +52,12 @@ reimbursementsRouter.post(
   authorize(UserRole.EMPLOYEE),
   validate(createReimbursementSchema),
   create
+);
+reimbursementsRouter.post(
+  "/extract-data",
+  authorize(UserRole.EMPLOYEE),
+  upload.single("file"),
+  extractData
 );
 reimbursementsRouter.get(
   "/:id",
@@ -91,6 +99,12 @@ reimbursementsRouter.post(
   authorize(UserRole.EMPLOYEE),
   validate(reimbursementParamsSchema),
   cancel
+);
+reimbursementsRouter.post(
+  "/:id/analyze",
+  authorize(UserRole.MANAGER, UserRole.FINANCE),
+  validate(reimbursementParamsSchema),
+  analyzeAttachments
 );
 reimbursementsRouter.get(
   "/:id/history",

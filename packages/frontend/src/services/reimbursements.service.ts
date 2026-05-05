@@ -16,6 +16,27 @@ export type ReimbursementListFilters = {
   sortOrder?: 'asc' | 'desc'
 }
 
+export type ExtractedAttachmentData = {
+  amount?: number
+  expenseDate?: string
+  description?: string
+  descriptionMatchScore?: number
+  categoryName?: string
+  categoryConfidence?: number
+  matchedKeywords?: string[]
+  text?: string
+}
+
+export type ReimbursementAnalysis = {
+  score: number
+  matches: {
+    amount: boolean
+    expenseDate: boolean
+    descriptionSimilarity: number
+  }
+  extracted: ExtractedAttachmentData
+}
+
 function buildReimbursementParams(page: number, limit: number, filters: ReimbursementListFilters) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) })
   if (filters.search) params.set('search', filters.search)
@@ -91,4 +112,18 @@ export function addAttachment(id: string, file: File) {
 
 export function listAttachments(id: string, page = 1, limit = 10) {
   return apiFetch<PaginatedResponse<Attachment>>(`/reimbursements/${id}/attachments?page=${page}&limit=${limit}`)
+}
+
+export function extractDataFromAttachment(file: File) {
+  const data = new FormData()
+  data.append('file', file)
+
+  return apiFetch<ExtractedAttachmentData>('/reimbursements/extract-data', {
+    method: 'POST',
+    body: data,
+  })
+}
+
+export function analyzeReimbursement(id: string) {
+  return apiFetch<ReimbursementAnalysis>(`/reimbursements/${id}/analyze`, { method: 'POST' })
 }

@@ -7,10 +7,14 @@ import {
   type UserRole as UserRoleType,
 } from "../../generated/prisma/index";
 
+import fs from "node:fs/promises";
+import path from "node:path";
 import dayjs from "dayjs";
+import { analyzeDocument, type AnalysisResult } from "../analysis/analysis.service.ts";
 import { AppError } from "../../lib/AppError.ts";
 import { getPagination, paginatedResponse, type PaginationQuery } from "../../lib/pagination.ts";
 import { prisma } from "../../lib/prisma.ts";
+import { uploadsDir } from "../../middlewares/upload.ts";
 import type { ListReimbursementsQuery } from "./reimbursements.schemas.ts";
 
 type AuthUser = {
@@ -517,4 +521,42 @@ export async function listAttachments(
   const total = await prisma.attachment.count({ where });
 
   return paginatedResponse(data, { page, limit, total });
+}
+
+export async function analyzeAttachments(
+  id: string,
+  userInput?: AuthUser
+): Promise<AnalysisResult> {
+  const user = requireUser(userInput);
+  const reimbursement = await findReimbursement(id);
+  ensureCanView(reimbursement, user);
+
+  if (user.role !== UserRole.MANAGER && user.role !== UserRole.FINANCE) {
+    throw new AppError("Você não tem permissão para analisar anexos", 403);
+  }
+
+  if (reimbursement.attachments.length === 0) {
+    throw new AppError("Solicitação não possui anexos para análise", 400);
+  }
+
+  const results = await Promise.all(
+    reimbursement.attachments.map(async (attachment) => {
+      const filePath = path.join(uploadsDir, path.basename(attachment.fileUrl));
+      const fileBuffer = await fs.readFile(filePath);
+      return analyzeDocument(fileBuffer, mimeTypeFromAttachment(attachment.fileType), {
+        amount: Number(reimbursement.amount),
+        expenseDate: reimbursement.expenseDate,
+        description: reimbursement.description,
+        categoryName: reimbursement.category.name,
+      });
+    })
+  );
+
+  return results.reduce((best, current) => (current.score > best.score ? current : best));
+}
+
+function mimeTypeFromAttachment(fileType: AttachmentType) {
+  if (fileType === AttachmentType.PDF) return "application/pdf";
+  if (fileType === AttachmentType.PNG) return "image/png";
+  return "image/jpeg";
 }
