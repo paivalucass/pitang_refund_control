@@ -3,20 +3,23 @@
 This is the Pitang Refund Control system, designed with a robust **Node/Bun Backend** (Express, Prisma, PostgreSQL) and a modern **React Frontend** (Vite, TailwindCSS, Shadcn UI).
 
 ## Prerequisites
+
 - [Docker](https://www.docker.com/) and Docker Compose
 - [Bun](https://bun.sh/) (for local development and testing)
 
 ---
 
-## 🚀 Running the Project (Dev Mode)
+## Running the Project (Dev Mode)
 
 The entire project (Frontend, Backend, and Database) is orchestrated via Docker Compose, configured for **hot-reloading**. This means any changes you make to the source code will immediately reflect in the running containers.
 
 1. **Start the containers**
+
    ```bash
    docker compose up --build
    ```
-   *This single command will:*
+
+   _This single command will:_
    - Start the PostgreSQL database.
    - Install backend dependencies, run migrations, seed the database with mock data, and start the API with hot-reload at `http://localhost:3000`.
    - Install frontend dependencies and start the Vite dev server at `http://localhost:5173`.
@@ -34,11 +37,11 @@ The entire project (Frontend, Backend, and Database) is orchestrated via Docker 
    - `joao@pitang.com` (Employee)
    - `maria@pitang.com` (Employee)
    - `ana.beatriz@pitang.com` (Employee)
-   - *Password for all users:* `senha123`
+   - _Password for all users:_ `senha123`
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
 Tests are executed locally using `bun` against a dedicated test database to ensure your real data is never wiped.
 
@@ -50,7 +53,7 @@ The backend tests rely on a test database (`pitang_refund_test`).
    ```bash
    cd packages/backend
    ```
-2. **Push the schema to the test database** *(Only needed once or when schema changes)*:
+2. **Push the schema to the test database** _(Only needed once or when schema changes)_:
    ```bash
    DATABASE_URL="postgresql://postgres:postgres@localhost:5433/pitang_refund_test?schema=public" bunx prisma db push
    ```
@@ -58,7 +61,7 @@ The backend tests rely on a test database (`pitang_refund_test`).
    ```bash
    bun run test
    ```
-   *(Note: If you experience Jest compatibility issues with Bun, you can also run `npx jest --runInBand`)*
+   _(Note: If you experience Jest compatibility issues with Bun, you can also run `npx jest --runInBand`)_
 
 ### 2. Frontend Tests
 
