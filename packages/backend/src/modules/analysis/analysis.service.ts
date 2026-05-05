@@ -37,7 +37,7 @@ type TesseractModule = {
   recognize: (
     buffer: Buffer,
     language?: string,
-    options?: { cachePath?: string }
+    options?: { cachePath?: string; langPath?: string }
   ) => Promise<{ data?: { text?: string } }>;
 };
 
@@ -65,7 +65,9 @@ const CATEGORY_PROFILES = [
     categoryName: "Transporte",
     label: "transporte",
     keywords: [
-      "99",
+      "99 app",
+      "99 taxi",
+      "99 táxi",
       "abastecimento",
       "aeroporto",
       "app",
@@ -231,19 +233,51 @@ async function extractPdfText(fileBuffer: Buffer): Promise<string> {
   const ocrText = await extractPdfTextWithOcr(fileBuffer);
   if (hasUsefulText(ocrText)) return normalizeText(ocrText);
 
-  return normalizeText(fallbackBufferText(fileBuffer));
+  return "";
 }
 
 async function extractImageText(fileBuffer: Buffer): Promise<string> {
   try {
     const tesseract = await loadModuleDefault<TesseractModule>("tesseract.js");
+    const langPath = await ensureTesseractLangPath();
     const result = await tesseract.recognize(fileBuffer, "por+eng", {
       cachePath: path.join(os.tmpdir(), "pitang-tesseract-cache"),
+      langPath,
     });
     return normalizeText(result.data?.text ?? "");
   } catch {
     return normalizeText(fallbackBufferText(fileBuffer));
   }
+}
+
+async function ensureTesseractLangPath() {
+  const targetDir = path.join(os.tmpdir(), "pitang-tesseract-data");
+  await fs.mkdir(targetDir, { recursive: true });
+  await Promise.all([
+    ensureTesseractLanguageFile("eng", targetDir),
+    ensureTesseractLanguageFile("por", targetDir),
+  ]);
+  return targetDir;
+}
+
+async function ensureTesseractLanguageFile(language: "eng" | "por", targetDir: string) {
+  const targetPath = path.join(targetDir, `${language}.traineddata.gz`);
+  try {
+    await fs.access(targetPath);
+    return;
+  } catch {
+    // Copy the bundled language file below.
+  }
+
+  const sourcePath = path.resolve(
+    process.cwd(),
+    "node_modules",
+    "@tesseract.js-data",
+    language,
+    "4.0.0",
+    `${language}.traineddata.gz`
+  );
+  await fs.copyFile(sourcePath, targetPath);
 }
 
 async function extractPdfTextWithCli(fileBuffer: Buffer) {
@@ -398,7 +432,7 @@ type InferredCategory = {
 };
 
 function inferCategory(text: string): InferredCategory | undefined {
-  const normalized = stripAccents(text).toLowerCase();
+  const normalized = stripAccents(textWithoutDocumentIds(text)).toLowerCase();
   const candidates = CATEGORY_PROFILES.map((profile) => {
     const matchedKeywords = profile.keywords
       .filter((keyword) => containsKeyword(normalized, keyword))
@@ -414,6 +448,13 @@ function inferCategory(text: string): InferredCategory | undefined {
     .sort((left, right) => right.confidence - left.confidence || right.matchedKeywords.length - left.matchedKeywords.length);
 
   return candidates[0];
+}
+
+function textWithoutDocumentIds(text: string) {
+  return text
+    .split(/\n+/)
+    .filter((line) => !DOCUMENT_ID_REGEX.test(line))
+    .join("\n");
 }
 
 function containsKeyword(normalizedText: string, keyword: string) {

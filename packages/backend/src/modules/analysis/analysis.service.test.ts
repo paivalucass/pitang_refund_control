@@ -45,6 +45,18 @@ describe("analysis.service", () => {
     expect(result.amount).toBeUndefined();
   });
 
+  it("does not classify a receipt as transport because a document id contains 99", () => {
+    const result = extractEntities(`
+      BRAZZETUS BOA VIAGEM
+      CNPJ 12.345.678/0001-99
+      Restaurante e churrascaria
+      Total R$ 149,90
+    `);
+
+    expect(result.categoryName).toBe("Alimentação");
+    expect(result.description).toBe("Despesa de alimentação - Restaurante");
+  });
+
   it("infers category and description from category-related keywords", () => {
     const result = extractEntities(`
       Uber do Brasil Tecnologia
