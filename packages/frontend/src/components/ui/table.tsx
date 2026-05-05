@@ -20,9 +20,9 @@ export const TableRow = ({ className, ...props }: React.HTMLAttributes<HTMLTable
 )
 
 export const TableHead = ({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) => (
-  <th className={cn('h-12 px-4 text-left align-middle font-medium text-slate-500', className)} {...props} />
+  <th className={cn('h-12 px-3 text-left align-middle font-medium text-slate-500 lg:px-4', className)} {...props} />
 )
 
 export const TableCell = ({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) => (
-  <td className={cn('p-4 align-middle', className)} {...props} />
+  <td className={cn('px-3 py-4 align-middle lg:px-4', className)} {...props} />
 )

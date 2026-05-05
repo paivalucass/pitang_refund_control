@@ -94,7 +94,7 @@ export function AppLayout() {
             </Button>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-7xl p-4 lg:p-8">
+        <main className="mx-auto w-full max-w-[96rem] p-4 lg:p-8">
           <Outlet />
         </main>
       </div>

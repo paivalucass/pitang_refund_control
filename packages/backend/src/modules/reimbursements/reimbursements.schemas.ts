@@ -45,6 +45,12 @@ export const attachmentSchema = z.object({
   params: reimbursementParamsSchema.shape.params,
 });
 
+export const attachmentParamsSchema = z.object({
+  params: reimbursementParamsSchema.shape.params.extend({
+    attachmentId: z.uuid(),
+  }),
+});
+
 export const listReimbursementsQuerySchema = paginationQuerySchema.extend({
   search: z.string().trim().optional(),
   categoryId: z.uuid().optional(),

@@ -18,7 +18,9 @@ services:
       retries: 10
 
   backend:
-    image: oven/bun:alpine
+    build:
+      context: ./packages/backend
+    image: pitang-refund-backend
     container_name: pitang_refund_backend
     restart: unless-stopped
     depends_on:

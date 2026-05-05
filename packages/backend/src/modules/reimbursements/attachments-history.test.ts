@@ -38,6 +38,30 @@ describe("reimbursement attachments and history", () => {
     expect(listed.body.meta).toMatchObject({ page: 1, limit: 10, total: 1, totalPages: 1 });
   });
 
+  it("removes attachments from a draft reimbursement owner", async () => {
+    const employee = await createUserAndToken(UserRole.EMPLOYEE);
+    const category = await createCategory();
+    const reimbursement = await createReimbursement(employee.user.id, category.id);
+
+    const created = await request(app)
+      .post(`/reimbursements/${reimbursement.id}/attachments`)
+      .set(auth(employee.token))
+      .attach("file", Buffer.from("%PDF-1.4 fake receipt"), {
+        filename: "receipt.pdf",
+        contentType: "application/pdf",
+      });
+
+    const removed = await request(app)
+      .delete(`/reimbursements/${reimbursement.id}/attachments/${created.body.id}`)
+      .set(auth(employee.token));
+    const listed = await request(app)
+      .get(`/reimbursements/${reimbursement.id}/attachments`)
+      .set(auth(employee.token));
+
+    expect(removed.status).toBe(204);
+    expect(listed.body.data).toHaveLength(0);
+  });
+
   it("rejects invalid attachment file types", async () => {
     const employee = await createUserAndToken(UserRole.EMPLOYEE);
     const category = await createCategory();

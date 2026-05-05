@@ -16,7 +16,12 @@ jest.mock('@/services/categories.service', () => ({
 jest.mock('@/services/reimbursements.service', () => ({
   createReimbursement: jest.fn().mockResolvedValue({ id: 'req-1' }),
   addAttachment: jest.fn().mockResolvedValue({ id: 'att-1' }),
+  extractDataFromAttachment: jest.fn().mockResolvedValue({}),
 }))
+
+beforeEach(() => {
+  jest.clearAllMocks()
+})
 
 test('valida campos obrigatorios', async () => {
   render(
@@ -71,4 +76,26 @@ test('envia anexos selecionados depois de criar a solicitacao', async () => {
   await userEvent.click(screen.getByRole('button', { name: /criar solicitação/i }))
 
   await waitFor(() => expect(addAttachment).toHaveBeenCalledWith('req-1', attachment))
+})
+
+test('remove anexo selecionado antes de criar a solicitacao', async () => {
+  render(
+    <MemoryRouter>
+      <NewReimbursementPage />
+    </MemoryRouter>,
+  )
+
+  const attachment = new File(['nota'], 'nota.pdf', { type: 'application/pdf' })
+
+  await waitFor(() => expect(screen.getByLabelText(/categoria/i)).toBeInTheDocument())
+  await userEvent.selectOptions(screen.getByLabelText(/categoria/i), 'cat-1')
+  await userEvent.type(screen.getByLabelText(/descrição/i), 'Almoço com cliente')
+  await userEvent.type(screen.getByLabelText(/valor/i), '120')
+  await userEvent.type(screen.getByLabelText(/data da despesa/i), '2026-05-01')
+  await userEvent.upload(screen.getByLabelText(/anexos/i), attachment)
+  await userEvent.click(screen.getByRole('button', { name: /remover anexo nota\.pdf/i }))
+  await waitFor(() => expect(screen.queryByRole('button', { name: /remover anexo nota\.pdf/i })).not.toBeInTheDocument())
+  await userEvent.click(screen.getByRole('button', { name: /criar solicitação/i }))
+
+  expect(addAttachment).not.toHaveBeenCalled()
 })

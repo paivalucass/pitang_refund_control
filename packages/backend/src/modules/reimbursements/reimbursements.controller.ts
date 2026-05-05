@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
+import fs from "node:fs/promises";
 import { AttachmentType } from "../../generated/prisma/index";
+import { extractEntities, extractText } from "../analysis/analysis.service.ts";
 import { AppError } from "../../lib/AppError.ts";
 import { getPaginationQuery, getValidatedQuery } from "../../lib/pagination.ts";
 import type { ListReimbursementsQuery } from "./reimbursements.schemas.ts";
@@ -136,4 +138,40 @@ export async function listAttachments(req: Request, res: Response): Promise<void
     getPaginationQuery(req)
   );
   res.json(attachments);
+}
+
+export async function removeAttachment(req: Request, res: Response): Promise<void> {
+  await reimbursementsService.removeAttachment(
+    getId(req),
+    req.params.attachmentId as string,
+    req.user
+  );
+  res.status(204).send();
+}
+
+export async function extractData(req: Request, res: Response): Promise<void> {
+  if (!req.file) {
+    throw new AppError("Arquivo é obrigatório", 400);
+  }
+
+  try {
+    const text = await extractText(await fs.readFile(req.file.path), req.file.mimetype);
+    const data = extractEntities(text);
+    res.json({
+      amount: data.amount,
+      expenseDate: data.expenseDate,
+      description: data.description,
+      categoryName: data.categoryName,
+      categoryConfidence: data.categoryConfidence,
+      matchedKeywords: data.matchedKeywords,
+      text: data.text,
+    });
+  } finally {
+    await fs.unlink(req.file.path).catch(() => undefined);
+  }
+}
+
+export async function analyzeAttachments(req: Request, res: Response): Promise<void> {
+  const analysis = await reimbursementsService.analyzeAttachments(getId(req), req.user);
+  res.json(analysis);
 }

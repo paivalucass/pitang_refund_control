@@ -7,20 +7,24 @@ import { validate } from "../../middlewares/validate.ts";
 import { paginationQuerySchema } from "../../lib/pagination.ts";
 import {
   addAttachment,
+  analyzeAttachments,
   approve,
   cancel,
   create,
   detail,
+  extractData,
   history,
   list,
   listAttachments,
   past,
   pay,
   reject,
+  removeAttachment,
   submit,
   update,
 } from "./reimbursements.controller.ts";
 import {
+  attachmentParamsSchema,
   attachmentSchema,
   createReimbursementSchema,
   listReimbursementsQuerySchema,
@@ -50,6 +54,12 @@ reimbursementsRouter.post(
   authorize(UserRole.EMPLOYEE),
   validate(createReimbursementSchema),
   create
+);
+reimbursementsRouter.post(
+  "/extract-data",
+  authorize(UserRole.EMPLOYEE),
+  upload.single("file"),
+  extractData
 );
 reimbursementsRouter.get(
   "/:id",
@@ -92,6 +102,12 @@ reimbursementsRouter.post(
   validate(reimbursementParamsSchema),
   cancel
 );
+reimbursementsRouter.post(
+  "/:id/analyze",
+  authorize(UserRole.MANAGER, UserRole.FINANCE),
+  validate(reimbursementParamsSchema),
+  analyzeAttachments
+);
 reimbursementsRouter.get(
   "/:id/history",
   validate(z.object({
@@ -114,4 +130,10 @@ reimbursementsRouter.get(
     query: paginationQuerySchema,
   })),
   listAttachments
+);
+reimbursementsRouter.delete(
+  "/:id/attachments/:attachmentId",
+  authorize(UserRole.EMPLOYEE),
+  validate(attachmentParamsSchema),
+  removeAttachment
 );

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { formatCurrency } from '@/lib/format'
 import { firstZodError, reimbursementSchema } from '@/lib/validation'
 import type { Category } from '@/types'
-import type { ReimbursementFormData } from '@/services/reimbursements.service'
+import { extractDataFromAttachment, type ReimbursementFormData } from '@/services/reimbursements.service'
 
 const ACCEPTED_ATTACHMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024
@@ -36,6 +37,9 @@ export function ReimbursementForm({
   const [amount, setAmount] = React.useState(initialValues?.amount?.toString() ?? '')
   const [expenseDate, setExpenseDate] = React.useState(initialValues?.expenseDate ?? '')
   const [error, setError] = React.useState('')
+  const [extracting, setExtracting] = React.useState(false)
+  const attachmentInputRef = React.useRef<HTMLInputElement | null>(null)
+  const extractionRunRef = React.useRef(0)
   const activeCategories = categories.filter((category) => category.active)
   const selectedCategory = categories.find((category) => category.id === categoryId)
   const selectedLimit = selectedCategory?.valueLimit
@@ -65,7 +69,7 @@ export function ReimbursementForm({
     onSubmit(result.data)
   }
 
-  function handleAttachmentsChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAttachmentsChange(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
     const invalidFile = files.find((file) => !ACCEPTED_ATTACHMENT_TYPES.includes(file.type) || file.size > MAX_ATTACHMENT_SIZE)
     if (invalidFile) {
@@ -77,6 +81,37 @@ export function ReimbursementForm({
 
     setError('')
     onAttachmentsChange?.(files)
+    if (!files[0]) return
+
+    const extractionRun = extractionRunRef.current + 1
+    extractionRunRef.current = extractionRun
+    setExtracting(true)
+    try {
+      const extracted = await extractDataFromAttachment(files[0])
+      if (extractionRunRef.current !== extractionRun) return
+      if (extracted.amount !== undefined) setAmount(String(extracted.amount))
+      if (extracted.expenseDate) setExpenseDate(extracted.expenseDate)
+      if (extracted.description) setDescription((current) => current || extracted.description || '')
+      if (extracted.categoryName) {
+        const matchedCategory = activeCategories.find((category) => normalizeCategory(category.name) === normalizeCategory(extracted.categoryName ?? ''))
+        if (matchedCategory) setCategoryId(matchedCategory.id)
+      }
+    } catch {
+      if (extractionRunRef.current !== extractionRun) return
+      setError('Não foi possível analisar o comprovante automaticamente. Você ainda pode preencher os campos manualmente.')
+    } finally {
+      if (extractionRunRef.current === extractionRun) setExtracting(false)
+    }
+  }
+
+  function handleRemoveAttachment(index: number) {
+    const nextFiles = attachments?.filter((_file, fileIndex) => fileIndex !== index) ?? []
+    extractionRunRef.current += 1
+    setExtracting(false)
+    onAttachmentsChange?.(nextFiles)
+    if (nextFiles.length === 0 && attachmentInputRef.current) {
+      attachmentInputRef.current.value = ''
+    }
   }
 
   return (
@@ -125,14 +160,28 @@ export function ReimbursementForm({
             id="attachments"
             accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
             multiple
+            ref={attachmentInputRef}
             type="file"
             onChange={handleAttachmentsChange}
           />
           <p className="text-xs text-slate-500">Formatos aceitos: PDF, JPG ou PNG até 5MB cada.</p>
+          {extracting ? <p className="text-xs font-medium text-red-700">Analisando comprovante...</p> : null}
           {attachments?.length ? (
             <ul className="space-y-1 text-sm text-slate-600">
-              {attachments.map((file) => (
-                <li className="truncate" key={`${file.name}-${file.size}`}>{file.name}</li>
+              {attachments.map((file, index) => (
+                <li className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2" key={`${file.name}-${file.size}-${index}`}>
+                  <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                  <Button
+                    aria-label={`Remover anexo ${file.name}`}
+                    className="h-7 w-7 shrink-0 p-0"
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                    onClick={() => handleRemoveAttachment(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </li>
               ))}
             </ul>
           ) : null}
@@ -143,4 +192,8 @@ export function ReimbursementForm({
       </Button>
     </form>
   )
+}
+
+function normalizeCategory(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '')
 }

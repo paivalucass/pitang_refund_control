@@ -14,7 +14,7 @@ The entire project (Frontend, Backend, and Database) is orchestrated via Docker 
 
 1. **Start the containers**
    ```bash
-   docker compose up
+   docker compose up --build
    ```
    *This single command will:*
    - Start the PostgreSQL database.
@@ -28,8 +28,12 @@ The entire project (Frontend, Backend, and Database) is orchestrated via Docker 
 3. **Login Details (from Seed)**
    - `admin@pitang.com` (Admin)
    - `gestor@pitang.com` (Manager)
+   - `paula.gestora@pitang.com` (Manager)
    - `financeiro@pitang.com` (Finance)
+   - `ana.financeiro@pitang.com` (Finance)
    - `joao@pitang.com` (Employee)
+   - `maria@pitang.com` (Employee)
+   - `ana.beatriz@pitang.com` (Employee)
    - *Password for all users:* `senha123`
 
 ---
