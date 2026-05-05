@@ -14,7 +14,7 @@ The entire project (Frontend, Backend, and Database) is orchestrated via Docker 
 
 1. **Start the containers**
    ```bash
-   docker compose up
+   docker compose up --build
    ```
    *This single command will:*
    - Start the PostgreSQL database.
