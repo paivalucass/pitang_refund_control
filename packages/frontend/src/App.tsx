@@ -11,6 +11,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { ReimbursementDetailPage } from '@/pages/ReimbursementDetailPage'
 import { ReimbursementsHistoryPage } from '@/pages/ReimbursementsHistoryPage'
+import { StatisticsPage } from '@/pages/StatisticsPage'
 import { UsersPage } from '@/pages/UsersPage'
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/statistics" element={<StatisticsPage />} />
           <Route element={<PrivateRoute allowedRoles={['EMPLOYEE']} />}>
             <Route path="/reimbursements/new" element={<NewReimbursementPage />} />
             <Route path="/reimbursements/:id/edit" element={<EditReimbursementPage />} />

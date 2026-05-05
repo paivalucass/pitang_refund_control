@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
-import { FolderOpen, History, LayoutDashboard, LogOut, Menu, PlusCircle, Users, X } from 'lucide-react'
+import { BarChart3, FolderOpen, History, LayoutDashboard, LogOut, Menu, PlusCircle, Users, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { RoleBadge } from '@/components/RoleBadge'
@@ -17,6 +17,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, roles: ['EMPLOYEE', 'MANAGER', 'FINANCE', 'ADMIN'] },
+  { label: 'Estatísticas', to: '/statistics', icon: BarChart3, roles: ['EMPLOYEE', 'MANAGER', 'FINANCE', 'ADMIN'] },
   { label: 'Nova Solicitação', to: '/reimbursements/new', icon: PlusCircle, roles: ['EMPLOYEE'] },
   { label: 'Histórico', to: '/reimbursements/history', icon: History, roles: ['MANAGER', 'FINANCE'] },
   { label: 'Categorias', to: '/categories', icon: FolderOpen, roles: ['ADMIN'] },
