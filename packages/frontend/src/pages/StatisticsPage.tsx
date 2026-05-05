@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
