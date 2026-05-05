@@ -123,11 +123,17 @@ const CATEGORY_PROFILES = [
       "marmita",
       "padaria",
       "pizzaria",
+      "pizza",
+      "pizzas",
+      "burguer",
+      "burguers",
+      "hamburguer",
       "refeicao",
       "refeição",
       "restaurante",
       "sorveteria",
       "supermercado",
+      "99 food"
     ],
   },
   {
