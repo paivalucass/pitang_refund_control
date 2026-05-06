@@ -1,77 +1,103 @@
 # Pitang Refund Control
 
-This is the Pitang Refund Control system, designed with a robust **Node/Bun Backend** (Express, Prisma, PostgreSQL) and a modern **React Frontend** (Vite, TailwindCSS, Shadcn UI).
+Este é o sistema de Controle de Reembolsos da Pitang, desenvolvido com **Backend em Node/Bun** (Express, Prisma, PostgreSQL) e **Frontend em React** (Vite, TailwindCSS, Shadcn UI).
 
-## Prerequisites
+## Pré-requisitos
 
-- [Docker](https://www.docker.com/) and Docker Compose
-- [Bun](https://bun.sh/) (for local development and testing)
+- [Docker](https://www.docker.com/) e Docker Compose
+- [Bun](https://bun.sh/) (para desenvolvimento local e testes)
 
 ---
 
-## Running the Project (Dev Mode)
+## Executando o Projeto (Modo de Desenvolvimento)
 
-The entire project (Frontend, Backend, and Database) is orchestrated via Docker Compose, configured for **hot-reloading**. This means any changes you make to the source code will immediately reflect in the running containers.
+Todo o projeto (Frontend, Backend e Banco de Dados) é orquestrado via Docker Compose, configurado para **hot-reloading**. Isso significa que qualquer alteração que você fizer no código fonte será refletida imediatamente nos containers em execução.
 
-1. **Start the containers**
+#### 1. **Configuração das Variáveis de Ambiente**
+   Antes de iniciar o projeto, adicione as variáveis de ambiente para desenvolvimento e teste local.
+   ```bash
+   cp packages/backend/.env.example packages/backend/.env && cp packages/backend/.env.test.example packages/backend/.env.test
+   ```
+
+#### 2. **Inicie os containers**
 
    ```bash
    docker compose up --build
    ```
 
-   _This single command will:_
-   - Start the PostgreSQL database.
-   - Install backend dependencies, run migrations, seed the database with mock data, and start the API with hot-reload at `http://localhost:3000`.
-   - Install frontend dependencies and start the Vite dev server at `http://localhost:5173`.
+   _Este único comando irá:_
+   - Iniciar o banco de dados PostgreSQL.
+   - Instalar as dependências do backend, executar as migrations, popular o banco de dados com dados de teste (seed) e iniciar a API com hot-reload em `http://localhost:3000`.
+   - Instalar as dependências do frontend e iniciar o servidor de desenvolvimento do Vite em `http://localhost:5173`.
 
-2. **Access the Application**
+#### 3. **Acesse a Aplicação**
    - **Frontend:** [http://localhost:5173](http://localhost:5173)
    - **Backend API:** [http://localhost:3000](http://localhost:3000)
 
-3. **Login Details (from Seed)**
-   - `admin@pitang.com` (Admin)
-   - `gestor@pitang.com` (Manager)
-   - `paula.gestora@pitang.com` (Manager)
-   - `financeiro@pitang.com` (Finance)
-   - `ana.financeiro@pitang.com` (Finance)
-   - `joao@pitang.com` (Employee)
-   - `maria@pitang.com` (Employee)
-   - `ana.beatriz@pitang.com` (Employee)
-   - _Password for all users:_ `senha123`
+#### 4. **Dados de Login (do Seed)**
+   - `admin@pitang.com` (Administrador)
+   - `gestor@pitang.com` (Gestor)
+   - `paula.gestora@pitang.com` (Gestor)
+   - `financeiro@pitang.com` (Financeiro)
+   - `ana.financeiro@pitang.com` (Financeiro)
+   - `joao@pitang.com` (Funcionário)
+   - `maria@pitang.com` (Funcionário)
+   - `ana.beatriz@pitang.com` (Funcionário)
+   - _Senha para todos os usuários:_ `senha123`
 
 ---
 
-## Running Tests
 
-Tests are executed locally using `bun` against a dedicated test database to ensure your real data is never wiped.
+## Postman (APIs)
 
-### 1. Backend Tests
+Para testar as requisições da API, você pode importar a Collection do Postman que está localizada na pasta `postman/` na raiz do projeto:
 
-The backend tests rely on a test database (`pitang_refund_test`).
+- **Collection:** `postman/pitang-refund.postman_collection.json`
 
-1. **Navigate to the backend directory:**
+Basta importar esse arquivo no seu aplicativo do Postman para ter acesso a todos os endpoints documentados e configurados.
+
+
+---
+
+## Executando os Testes
+
+Os testes são executados localmente usando `bun` contra um banco de dados de teste dedicado para garantir que os dados reais nunca sejam apagados.
+
+### Testes do Backend
+
+Os testes do backend dependem de um banco de dados de teste (`pitang_refund_test`).
+
+#### 1. **Navegue até o diretório do backend:**
    ```bash
    cd packages/backend
    ```
-2. **Push the schema to the test database** _(Only needed once or when schema changes)_:
+#### 2. **Instale as dependências:**
+   ```bash
+   bun install
+   ```
+3. **Envie o schema para o banco de dados de teste** _(Necessário apenas uma vez ou quando o schema mudar)_:
    ```bash
    DATABASE_URL="postgresql://postgres:postgres@localhost:5433/pitang_refund_test?schema=public" bunx prisma db push
    ```
-3. **Run the tests:**
+4. **Execute os testes:**
    ```bash
    bun run test
    ```
-   _(Note: If you experience Jest compatibility issues with Bun, you can also run `npx jest --runInBand`)_
+   _(Nota: Se você tiver problemas de compatibilidade do Jest com o Bun, você também pode executar `npx jest --runInBand`)_
 
-### 2. Frontend Tests
+### Testes do Frontend
 
-Frontend tests are completely isolated and use JSDOM, meaning you don't need the database or Docker running.
+Os testes do frontend são completamente isolados e usam JSDOM, o que significa que você não precisa do banco de dados ou do Docker em execução.
 
-1. **Navigate to the frontend directory:**
+#### 1. **Navegue até o diretório do frontend:**
    ```bash
    cd packages/frontend
    ```
-2. **Run the tests:**
+#### 2. **Instale as dependências:**
+   ```bash
+   bun install
+   ```
+#### 3. **Execute os testes:**
    ```bash
    bun run test
    ```
