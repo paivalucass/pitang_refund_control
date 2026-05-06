@@ -75,11 +75,12 @@ Os testes do backend dependem de um banco de dados de teste (`pitang_refund_test
    ```bash
    bun install
    ```
-3. **Envie o schema para o banco de dados de teste** _(Necessário apenas uma vez ou quando o schema mudar)_:
+#### 3. **Envie o schema para o banco de dados de teste** 
+_(Necessário apenas uma vez ou quando o schema mudar)_
    ```bash
    DATABASE_URL="postgresql://postgres:postgres@localhost:5433/pitang_refund_test?schema=public" bunx prisma db push
    ```
-4. **Execute os testes:**
+#### 4. **Execute os testes:**
    ```bash
    bun run test
    ```
